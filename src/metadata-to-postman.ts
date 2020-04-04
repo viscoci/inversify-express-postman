@@ -1,12 +1,6 @@
-import { interfaces } from 'inversify-express-utils';
 import * as PostmanCollection from 'postman-collection';
-import {DecoratorData} from './interfaces';
+import {DecoratorData, Metadata, ExportOptions} from './interfaces';
 
-export interface Metadata {
-  controllerMetadata: interfaces.ControllerMetadata;
-  methodMetadata: interfaces.ControllerMethodMetadata[];
-  parameterMetadata: interfaces.ControllerParameterMetadata;
-}
 
 enum PARAMETER_TYPE {
   REQUEST = 0,
@@ -18,22 +12,6 @@ enum PARAMETER_TYPE {
   COOKIES = 6,
   NEXT = 7,
 }
-
-export interface ExportOptions
-{
-  /**
-   * The value or path hosting the endpoints.
-   * @type {string} Treated as a variable
-   * @type {string[]} Treated as a split host path.
-   */
-  hostKey: string | string[];
-
-  /**
-   * When specifying a host path, a protocol must also be specified
-   */
-  hostProtocol?: "http" | "https";
-}
-
 
 export default function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: DecoratorData, options?: ExportOptions): PostmanCollection.ItemGroupDefinition[] {
   return metadata.map((controller) => {
