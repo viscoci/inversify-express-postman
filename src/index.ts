@@ -2,7 +2,7 @@ import toPostmanCollectionDefinition from './metadata-to-postman';
 import * as PostmanCollection from 'postman-collection';
 import * as invExpress from 'inversify-express-utils';
 import { Container } from 'inversify';
-import { controllers } from './Decorators';
+import { controllers } from './decorators/PostmanData';
 /*
 Goals:
  - Take Express Inversify API and export it to Postman Collection
@@ -16,14 +16,7 @@ export function load(container: Container): PostmanCollection.ItemGroupDefinitio
     return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers);
 }
 
-/**
- * Create an instance of PostmanCollection.Collection from an array of PostmanCollection.ItemGroupDefinitions
- */
-export function toPostmanCollection(collection: PostmanCollection.ItemGroupDefinition[]): PostmanCollection.Collection
-{
-    return new PostmanCollection.Collection({
-        item: collection
-    });
-}
 
-export * from './Decorators';
+
+export * as Decorators from './decorators';
+export * as Utilities from './utils';

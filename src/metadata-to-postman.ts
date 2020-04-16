@@ -62,6 +62,7 @@ export default function toPostmanCollectionDefinition(metadata: Metadata[], deco
           {
             splicedPath[i] = `{{${splicedPath[i].substring(1)}}}`
           }
+
         }
       }
 
@@ -123,7 +124,6 @@ export default function toPostmanCollectionDefinition(metadata: Metadata[], deco
       {
         nuItemEndpoint.request.body = decoratedData.body;
       }
-
       return nuItemEndpoint;
     });
     /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///

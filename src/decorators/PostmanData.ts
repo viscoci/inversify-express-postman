@@ -1,4 +1,4 @@
-import { DecoratorData } from './interfaces';
+import { DecoratorData } from '../interfaces';
 export const controllers = {};
 
 /**
