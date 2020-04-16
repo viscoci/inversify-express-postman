@@ -2,7 +2,8 @@ import toPostmanCollectionDefinition from './metadata-to-postman';
 import * as PostmanCollection from 'postman-collection';
 import * as invExpress from 'inversify-express-utils';
 import { Container } from 'inversify';
-import { controllers } from './decorators/PostmanData';
+import { DecoratorData } from './interfaces/DecoratorData';
+export const controllers: {[key: string]: DecoratorData} = {};
 /*
 Goals:
  - Take Express Inversify API and export it to Postman Collection
@@ -12,7 +13,7 @@ Goals:
  * Load the container data. Use inversify-express-utils decorators to get more data for endpoints
  * {@link https://github.com/inversify/inversify-express-utils#decorators}
  */
-export function load(container: Container): PostmanCollection.ItemGroupDefinition[] {
+export async function load(container: Container): Promise<PostmanCollection.ItemGroupDefinition[]> {
     return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers);
 }
 

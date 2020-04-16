@@ -5,7 +5,6 @@ export function QueryParamReplacer(key: string, value: any): any {
 
             if(Array.isArray(value))
             {
-                console.log('Found Query Array', value);
                 return value.filter((val: {key: string; value: any}) => {
                     switch(val.key)
                     {
@@ -14,8 +13,6 @@ export function QueryParamReplacer(key: string, value: any): any {
                         case "Type":
                         case "reference":
                         case "members":
-                            console.log('Filtering out', val)
-
                             return false;
 
                         default:
