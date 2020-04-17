@@ -59,8 +59,6 @@ export async function ContainerToCollectionJSON(container: Container): Promise<s
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams, space): Promise<string>
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams = false, space?: number, options?: ExportOptions ): Promise<string>
 {
-    console.log('FixQueryParams', FixQueryParams)
-    console.log('Space', space);
     const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
 
     return toJSONSchema(toPostmanCollection(itemGroup), FixQueryParams, space);

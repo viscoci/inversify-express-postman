@@ -1,4 +1,7 @@
 # inversify-express-postman
+
+[![NPM](https://nodei.co/npm/inversify-express-postman.png?downloads=true&downloadRank=true)](https://nodei.co/npm/inversify-express-postman/)
+
 ###### Package is not finished yet and breaking changes are likely  until v**1.0.0** is released.
 
 Export [inversify-express-utils] metadata to a [Postman Collection].
