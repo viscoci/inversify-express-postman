@@ -1,7 +1,10 @@
 import * as PostmanCollection from 'postman-collection';
 import { PostmanTests } from '../decorators/PostmanTest';
 
-export interface DecoratorData
+/**
+ * Extra information relevant to an endpoint
+ */
+export type DecoratorData =
 {
   name?: string;
   script?: string;

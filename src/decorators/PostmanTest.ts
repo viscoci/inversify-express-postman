@@ -2,20 +2,17 @@ import { controllers } from '..';
 
 export type PostmanEventListen = "test" | "prerequest";
 
-export type PostmanPathTest = {
-    path: string;
+export type PostmanEventTest<T> = {
+    func: T;
     listen: PostmanEventListen;
 }
 
-export type PostmanFuncTest = {
-    func: Function;
-    listen: PostmanEventListen;
-}
+export type PostmanPathTest = PostmanEventTest<string>;
 
-export type PostmanPremadeTest = {
-    lines: string[];
-    listen: PostmanEventListen;
-}
+export type PostmanFuncTest = PostmanEventTest<Function>;
+
+export type PostmanPremadeTest = PostmanEventTest<string[]>;
+
 
 export type PostmanTests = {
     paths?: Array<PostmanPathTest>;
@@ -51,7 +48,10 @@ export function PostmanTests({paths, funcs, premades}: PostmanTests): (target: a
  * @param func {Function} Javascript safe function in which the wrapped code will be taken from
  * @param listen {PostmanEventListen} When the test script should be called (usually is either `test` or `prerequest`)
  */
-export function PostmanTestFromFunction(listen: PostmanEventListen, func: Function)
+export function PostmanTestFunction(listen: PostmanEventListen, func: string)
+export function PostmanTestFunction(listen: PostmanEventListen, func: string[])
+export function PostmanTestFunction(listen: PostmanEventListen, func: Function)
+export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[])
 {
     const extended = function (target: any, key: string, value: any): void
     {
@@ -65,12 +65,34 @@ export function PostmanTestFromFunction(listen: PostmanEventListen, func: Functi
             controllers[key].tests = {};
         }
 
-        if(controllers[key].tests.funcs == undefined)
+        if(typeof(func) === "string")
         {
-            controllers[key].tests.funcs = new Array<PostmanFuncTest>();
+            if(controllers[key].tests.paths == undefined)
+            {
+                controllers[key].tests.paths = new Array<PostmanPathTest>();
+            }
+
+            controllers[key].tests.paths.push({func, listen});
+        }
+        else if (Array.isArray(func))
+        {
+            if(controllers[key].tests.premades == undefined)
+            {
+                controllers[key].tests.premades = new Array<PostmanPremadeTest>();
+            }
+
+            controllers[key].tests.premades.push({func, listen});
         }
 
-        controllers[key].tests.funcs.push({func: func, listen: listen});
+        else {
+
+            if(controllers[key].tests.funcs == undefined)
+            {
+                controllers[key].tests.funcs = new Array<PostmanFuncTest>();
+            }
+
+            controllers[key].tests.funcs.push({func, listen});
+        }
     }
 
     return extended;

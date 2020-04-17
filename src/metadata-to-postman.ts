@@ -43,7 +43,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
             nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
               listen: premade.listen,
               script: new PostmanCollection.Script({
-                exec: premade.lines,
+                exec: premade.func,
                 type: "text/javascript"
               })
             }));
@@ -74,7 +74,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
             nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
               listen: path.listen,
               script: new PostmanCollection.Script({
-                exec: await Utilities.functionFromFile(path.path),
+                exec: await Utilities.functionFromFile(path.func),
                 type: "text/javascript"
               })
             }));
