@@ -1,5 +1,5 @@
 import { DecoratorData } from '../interfaces';
-export const controllers = {};
+import { controllers } from '..';
 
 /**
  * Decorator used to add Postman data to an endpoint for exporting

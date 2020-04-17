@@ -26,6 +26,7 @@ module.exports = {
         "@typescript-eslint/no-namespace": "error",
         "@typescript-eslint/no-explicit-any": "off",
         // "@typescript-eslint/no-param-reassign": "off",
+        "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/no-unnecessary-type-assertion": "error",
         "@typescript-eslint/no-use-before-define": "warn",
         "@typescript-eslint/prefer-for-of": "off",
@@ -40,13 +41,10 @@ module.exports = {
         '@typescript-eslint/class-name-casing': "off",
         '@typescript-eslint/ban-ts-ignore': "warn",
         '@typescript-eslint/unbound-method': "warn",
+        '@typescript-eslint/no-unused-vars': "off",
         "comma-dangle": "warn",
         "constructor-super": "error",
-        "eqeqeq": [
-            "warn",
-            "always",
-            { "null": "ignore" }
-        ],
+        "eqeqeq": [2, "allow-null"],
         // "import/no-deprecated": "warn",
         // "import/no-extraneous-dependencies": "off",
         // "import/no-unassigned-import": "warn",

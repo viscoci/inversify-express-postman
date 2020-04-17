@@ -1,6 +1,10 @@
 import * as PostmanCollection from 'postman-collection';
+import {PostmanTest} from '.';
 
-export interface DecoratorData
+/**
+ * Extra information relevant to an endpoint
+ */
+export type DecoratorData =
 {
   name?: string;
   script?: string;
@@ -9,5 +13,6 @@ export interface DecoratorData
   requestParams?: [{value: string; index: number}];
   body?: PostmanCollection.RequestBodyDefinition;
   headers?: PostmanCollection.HeaderDefinition[];
+  tests?: PostmanTest;
 
 }

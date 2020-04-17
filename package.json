@@ -13,6 +13,7 @@
     "type": "git",
     "url": "git+https://github.com/viscoci/inversify-express-postman.git"
   },
+  "homepage": "https://github.com/viscoci/inversify-express-postman",
   "keywords": [
     "inversify",
     "express",
@@ -22,7 +23,7 @@
     "doc",
     "test"
   ],
-  "author": "viscoci",
+  "author": "Viscoci",
   "license": "MIT",
   "devDependencies": {
     "@types/express": "^4.17.4",
@@ -40,7 +41,9 @@
   "dependencies": {
     "express": "^4.17.1",
     "postman-collection": "^3.6.0",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.5"
   },
   "peerDependencies": {
     "inversify": "5.x",
