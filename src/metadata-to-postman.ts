@@ -19,7 +19,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
     const CollectDef: PostmanCollection.ItemGroupDefinition = {};
     CollectDef.name = controller.controllerMetadata.target.name;
-    const basePath = controller.controllerMetadata.path.split(/[\\\/]/);
+    const basePath = controller.controllerMetadata.path.split(/[\\/]/);
 
     if(basePath[0] === "")
     {
@@ -86,7 +86,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
       // Split the path up, locate an params and their indexes. Replace with new value
       const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
       const headers = new Array<PostmanCollection.HeaderDefinition>();
-      const splicedPath = endpoint.path.split(/[\\\/]/);
+      const splicedPath = endpoint.path.split(/[\\/]/);
 
       if(splicedPath[0] === "")
       {
