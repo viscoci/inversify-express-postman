@@ -1,5 +1,6 @@
 import * as PostmanCollection from 'postman-collection';
 import {PostmanTest} from '.';
+import { PostmanEnvironmentValue } from './PostmanEnvironment';
 
 /**
  * Extra information relevant to an endpoint

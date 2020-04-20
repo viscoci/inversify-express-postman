@@ -9,8 +9,10 @@ import { ExportOptions } from './interfaces/ExportOptions';
 
 export * as Types from './interfaces';
 export * as Decorators from './decorators';
-export * as Utilities from './utils'
+export * as Utilities from './utils';
+export * as Services from './services';
 export const controllers: {[key: string]: DecoratorData} = {};
+
 /*
 Goals:
  - Take Express Inversify API and export it to Postman Collection
@@ -42,7 +44,7 @@ export async function ContainerToItemGroupArray(container: Container, options?: 
 export async function ContainerToCollection(container: Container, options?: ExportOptions): Promise<PostmanCollection.Collection>
 {
     const itemGroup =  await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
-    return toPostmanCollection(itemGroup);
+    return toPostmanCollection(itemGroup, options.name, options.uid);
 }
 
 /**
@@ -59,9 +61,7 @@ export async function ContainerToCollectionJSON(container: Container): Promise<s
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams, space): Promise<string>
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams = false, space?: number, options?: ExportOptions ): Promise<string>
 {
-    console.log('FixQueryParams', FixQueryParams)
-    console.log('Space', space);
     const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
 
-    return toJSONSchema(toPostmanCollection(itemGroup), FixQueryParams, space);
+    return toJSONSchema(toPostmanCollection(itemGroup, options.name, options.uid), FixQueryParams, space);
 }
