@@ -126,9 +126,40 @@ export class PostmanApi implements PostmanAuth
         return <{collection: ApiCollection}>JSON.parse(response);
     }
 
-    async CreateEnvironment(environment: PostmanEnvironment): Promise<{environment: ApiEnvironment}>
+    async ListEnvironments(): Promise<{environments: Array<ApiEnvironment>}>
     {
         const request = rp(POSTMAN_API.ENVIRONMENTS(), {
+            method: "GET",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Api-Key': this.APIkey
+            }
+        });
+
+        request.catch(error => console.error(error));
+
+        const response = await request;
+
+        if(response.error)
+        {
+            console.error(`Failed during List of Postman Environments through API`, response.error, response);
+            throw new Error();
+        }
+
+        return <{environments: Array<ApiEnvironment>}>JSON.parse(response);
+    }
+
+    async CreateEnvironment(environment: PostmanEnvironment, workspace?: string): Promise<{environment: ApiEnvironment}>
+    {
+
+        let URL = POSTMAN_API.ENVIRONMENTS();
+
+        if(workspace != null)
+        {
+            URL += `?workspace=${workspace}`;
+        }
+
+        const request = rp(URL, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
@@ -143,7 +174,7 @@ export class PostmanApi implements PostmanAuth
 
         if(response.error)
         {
-            console.error(`Failed during Create Postman Collection through API`, response.error, response);
+            console.error(`Failed during Create Postman Environment through API`, response.error, response);
             throw new Error();
         }
 
@@ -167,7 +198,7 @@ export class PostmanApi implements PostmanAuth
 
         if(response.error)
         {
-            console.error(`Failed during Update Postman Collection through API`, response.error, response);
+            console.error(`Failed during Update Postman Environment through API`, response.error, response);
             throw new Error();
         }
 
