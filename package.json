@@ -1,6 +1,6 @@
 {
   "name": "inversify-express-postman",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Convert inversify express endpoints to postman collections for simple API testing with newman",
   "main": "dist/index",
   "scripts": {
@@ -30,12 +30,13 @@
     "@types/express-serve-static-core": "^4.17.3",
     "@types/node": "^13.11.0",
     "@types/postman-collection": "^3.5.3",
+    "@types/request-promise": "^4.1.46",
     "@typescript-eslint/eslint-plugin": "^2.26.0",
     "@typescript-eslint/parser": "^2.26.0",
-    "inversify": "^5.0.1",
-    "inversify-express-utils": "^6.3.2",
     "eslint": "^6.8.0",
     "eslint-plugin-import": "^2.20.2",
+    "inversify": "^5.0.1",
+    "inversify-express-utils": "^6.3.2",
     "typescript": "^3.8.3"
   },
   "dependencies": {

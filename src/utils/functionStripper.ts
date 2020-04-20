@@ -6,7 +6,7 @@
 export function functionStripper(value: string): string
 {
     let nuval = value;
-    if (value.startsWith("function") || value.startsWith('(')) {
+    if (value.startsWith("function") || value.startsWith('(') ||value.startsWith("TEST") || value.startsWith("PREREQUEST")) {
         nuval = value.substring(value.indexOf("{") + 1);
     }
     return nuval.substring(0, nuval.lastIndexOf("}") - 1);

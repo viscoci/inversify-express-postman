@@ -1,4 +1,4 @@
-import rp from 'request-promise';
+import * as rp from 'request-promise';
 import * as fs from 'fs';
 import { Utilities } from '..';
 

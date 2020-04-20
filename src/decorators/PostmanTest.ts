@@ -26,8 +26,9 @@ export function PostmanTests({paths, funcs, premades}: PostmanTest): (target: an
 }
 
 /**
- * Adds a single test function to an endpoint for exporting
- * @param func {Function} Javascript safe function in which the wrapped code will be taken from
+ * Adds a single test function to an endpoint for exporting based on a function that starts with
+ * `function` | `TEST` | `PREREQUEST` | `(`
+ * @param func {Function} Javascript safe function in which the wrapped code will be taken from. Name must start with either
  * @param listen {PostmanEventListen} When the test script should be called (usually is either `test` or `prerequest`)
  */
 export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[])
