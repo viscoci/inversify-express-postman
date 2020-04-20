@@ -1,6 +1,7 @@
 import * as PostmanCollection from 'postman-collection';
 import {DecoratorData, Metadata, ExportOptions} from './interfaces';
 import { Utilities } from '.';
+import { decorate } from 'inversify';
 
 
 enum PARAMETER_TYPE {
@@ -15,6 +16,7 @@ enum PARAMETER_TYPE {
 }
 
 export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: DecoratorData, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
+
   return await Promise.all(metadata.map(async (controller) => {
 
     const CollectDef: PostmanCollection.ItemGroupDefinition = {};
@@ -86,6 +88,12 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
       // Split the path up, locate an params and their indexes. Replace with new value
       const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
       const headers = new Array<PostmanCollection.HeaderDefinition>();
+
+      if(decoratedData.headers != null && decoratedData.headers.length > 0)
+      {
+        headers.push(...decoratedData.headers)
+      }
+
       const splicedPath = endpoint.path.split(/[\\/]/);
 
       if(splicedPath[0] === "")
@@ -153,7 +161,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
         }
         else
         {
-          host.push(`{{${options.hostKey}}}`);
+          host.push(`{{${options.hostKey || 'ROOT_URL'}}}`);
         }
       }
       else

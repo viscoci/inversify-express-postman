@@ -13,7 +13,7 @@ export interface PostmanEnvironment
     id: string;
     name: string;
     values: PostmanEnvironmentValue[];
-    _postman_variable_scope: "environment";
-    _postman_exported_at: ISOdate;
-    _postman_exported_using: string;
+    _postman_variable_scope?: "environment";
+    _postman_exported_at?: ISOdate;
+    _postman_exported_using?: string;
 }
