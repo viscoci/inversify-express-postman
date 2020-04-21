@@ -1,11 +1,17 @@
 # inversify-express-postman
-[![NPM](https://nodei.co/npm/inversify-express-postman.png?downloads=true&downloadRank=true)](https://nodei.co/npm/inversify-express-postman/)
-
-
-[Getting Started](#getting-started) | [Syncing with Postman API](#syncing-with-postman-api) | [PostmanApi Example](#postmanapi-example) | [Adding Test Scripts](#adding-test-scripts)
-___
 **Package is not finished yet and breaking changes are likely  until `v1.0.0` is released.**
 Export [inversify-express-utils] metadata to a [Postman Collection] and sync with the [Postman API]()
+
+
+[![NPM](https://nodei.co/npm/inversify-express-postman.png?downloads=true&downloadRank=true)](https://nodei.co/npm/inversify-express-postman/)
+
+|                       **Contents**                    | Examples|
+| ----------------------------------------------------- |:-------:|
+| **[Getting Started](#getting-started)**                   | [Including Body Info Manually](#manually-add-information)     |
+| **[Syncing with Postman API](#syncing-with-postman-api)** | [PostmanApi Example](#postmanapi-example)             |
+| **[Adding Test Scripts](#adding-test-scripts)**           |                                                       |
+___
+
 ### Getting Started
 Once a container has been setup, use one of the top level functions to convert the metadata from the container's express endpoints to a Postman Collection or a JSON of the Collection.
 
@@ -63,11 +69,12 @@ export class ExampleAPIv1Controller extends ControllerBase {
 
 
 ### Syncing with Postman API
-Included is a [PostmanApi] class with methods for handling requests to the Postman API to create / update items (e.g. Collections and Environments). In order to create an instance of the [PostmanApi] class, an [API Key] from Postman must be passed in. Visit [Postman's API documentation] to get a better understanding of what is happening when using this class.
+The [PostmanApi] service provides methods for handling requests to the Postman API to create / update items (e.g. Collections and Environments). In order to create an instance of the [PostmanApi] class, a [Postman API Key](https://go.postman.co/integrations/services/pm_pro_api) must be passed into the constructor.
+Visit [Postman's API documentation] to get a better understanding of what is happening when using the [PostmanApi] class.
 > If you need an API key, generate the key in your [Postman Integrations Dashboard](https://go.postman.co/integrations/services/pm_pro_api)
 
-###### PostmanApi Example
-The example below shows how to sync collections and create them using the branch they were executed from. A similar method can be used for environment variables.
+#### PostmanApi Example
+The example below shows how to sync collections and create them using the git branch it was executed from. A similar method can be used for environment variables.
 ```ts
 ...
 IEPostman.ContainerToCollection(container, {name: collectionName}).then(async collection => {
