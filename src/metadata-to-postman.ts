@@ -1,7 +1,8 @@
 import * as PostmanCollection from 'postman-collection';
 import {DecoratorData, Metadata, ExportOptions} from './interfaces';
-import { Utilities } from '.';
-import { decorate } from 'inversify';
+import { Utilities, Decorators } from '.';
+import { PostmanTest, PostmanEventTest } from './interfaces/PostmanTest';
+import { textFromFile } from './utils';
 
 
 enum PARAMETER_TYPE {
@@ -15,12 +16,21 @@ enum PARAMETER_TYPE {
   NEXT = 7,
 }
 
-export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: DecoratorData, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
-
+export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: [{[key: string]: DecoratorData},{[key: string]: DecoratorData}], options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
+  const folders = decoratorData[0];
+  const controllers = decoratorData[1];
   return await Promise.all(metadata.map(async (controller) => {
 
+    const folderData = folders[controller.controllerMetadata.target.name] || {};
+
     const CollectDef: PostmanCollection.ItemGroupDefinition = {};
-    CollectDef.name = controller.controllerMetadata.target.name;
+    CollectDef.name = folderData.name || controller.controllerMetadata.target.name;
+
+    if(folderData.description)
+    {
+      CollectDef.description = folderData.description.type === "path" ? await textFromFile(folderData.description.content) : folderData.description.content || "";
+    }
+
     const basePath = controller.controllerMetadata.path.split(/[\\/]/);
 
     if(basePath[0] === "")
@@ -28,62 +38,87 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
       basePath.shift();
     }
 
-    /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
+
     CollectDef.item = await Promise.all(controller.methodMetadata.map(async (endpoint) => {
 
-      const decoratedData: DecoratorData = decoratorData[endpoint.key] || {};
-      const nuItemEndpoint: PostmanCollection.Item = new PostmanCollection.Item({name: decoratedData.name || endpoint.key});
-      nuItemEndpoint.description = decoratedData.description || "";
+      const decoratedData: DecoratorData = controllers[endpoint.key] || {};
+      const nuItemEndpoint: PostmanCollection.Item = new PostmanCollection.Item({
+        name: decoratedData.name || endpoint.key
+      });
+
+
+      //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// TESTS
+      //// //// //// //// //// //// TESTS
+      const tests: PostmanTest = {
+        funcs: new Array<PostmanEventTest<Function>>(),
+        paths: new Array<PostmanEventTest<string>>(),
+        premades: new Array<PostmanEventTest<string[]>>()
+      };
+
+      if(folderData.tests)
+      {
+        if(folderData.tests.funcs) {tests.funcs.push(...folderData.tests.funcs);}
+        if(folderData.tests.paths) {tests.paths.push(...folderData.tests.paths);}
+        if(folderData.tests.premades) {tests.premades.push(...folderData.tests.premades);}
+      }
 
       if(decoratedData.tests)
       {
-        if(decoratedData.tests.premades && decoratedData.tests.premades.length > 0)
-        {
-          for(const premade of decoratedData.tests.premades)
-          {
-            // TODO : Premades (should work) have not been tested
-            nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-              listen: premade.listen,
-              script: new PostmanCollection.Script({
-                exec: premade.func,
-                type: "text/javascript"
-              })
-            }));
-          }
-        }
+        if(decoratedData.tests.funcs) {tests.funcs.push(...decoratedData.tests.funcs);}
+        if(decoratedData.tests.paths) {tests.paths.push(...decoratedData.tests.paths);}
+        if(decoratedData.tests.premades) {tests.premades.push(...decoratedData.tests.premades);}
+      }
 
-        if (decoratedData.tests.funcs && decoratedData.tests.funcs.length > 0)
+      if(tests.premades.length > 0)
+      {
+        for(const premade of tests.premades)
         {
-          // Function Obj
-          for(const func of decoratedData.tests.funcs)
-          {
-            // Currently Supported
-            nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-              listen: func.listen,
-              script: new PostmanCollection.Script({
-                exec: Utilities.toEventExec(func.func),
-                type: "text/javascript"
-              })
-            }));
-          }
-        }
-
-        if(decoratedData.tests.paths && decoratedData.tests.paths.length > 0)
-        {
-          // TODO : Paths have not been tested
-          for(const path of decoratedData.tests.paths)
-          {
-            nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-              listen: path.listen,
-              script: new PostmanCollection.Script({
-                exec: await Utilities.functionFromFile(path.func),
-                type: "text/javascript"
-              })
-            }));
-          }
+          // TODO : Premades (should work) have not been tested
+          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+            listen: premade.listen,
+            script: new PostmanCollection.Script({
+              exec: premade.func,
+              type: "text/javascript"
+            })
+          }));
         }
       }
 
+      if (tests.funcs.length > 0)
+      {
+        // Function Obj
+        for(const func of tests.funcs)
+        {
+          // Currently Supported
+          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+            listen: func.listen,
+            script: new PostmanCollection.Script({
+              exec: Utilities.toEventExec(func.func),
+              type: "text/javascript"
+            })
+          }));
+        }
+      }
+
+      if(tests.paths.length > 0)
+      {
+        // TODO : Paths have not been tested
+        for(const path of tests.paths)
+        {
+          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+            listen: path.listen,
+            script: new PostmanCollection.Script({
+              exec: await Utilities.functionFromFile(path.func),
+              type: "text/javascript"
+            })
+          }));
+        }
+      }
+      // // // End TESTS \\ \\ \\
+      //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+      //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// Query Params / Headers / Request Params
+      //// //// //// //// //// Query Params / Headers / Request Params
 
       // Split the path up, locate an params and their indexes. Replace with new value
       const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
@@ -133,17 +168,21 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
         switch(param.type)
         {
           case PARAMETER_TYPE.QUERY:
-            if(decoratedData.queryParams != null)
             {
-              if(decoratedData.queryParams[param.parameterName] != null)
+              if(decoratedData.queryParams != null && decoratedData.queryParams[param.parameterName] != null)
               {
-                queryParams.push({key: param.parameterName, value: `{{${decoratedData.queryParams[param.parameterName]}}}`});
+                queryParams.push({key: param.parameterName, value: decoratedData.queryParams[param.parameterName]});
+              }
+              else
+              {
+                queryParams.push({key: param.parameterName, value: ''})
               }
             }
             break;
 
           case PARAMETER_TYPE.HEADERS:
-            headers.push(<PostmanCollection.HeaderDefinition>{key: param.parameterName, name: param.parameterName});
+            // TODO : Headers inside the decorated data should be merged
+            headers.push(<PostmanCollection.HeaderDefinition>{key: param.parameterName, value: param.parameterName});
             break;
 
           default:
@@ -151,6 +190,11 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
         }
       }
 
+      //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+      //// //// //// //// //// //// //// //// //// //// //// //////// //// //// //// //// //// Host
+      //// //// //// //// //// Host
       const host = new Array<string>();
 
       if(options != null)
@@ -185,6 +229,25 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
       {
         nuItemEndpoint.request.body = new PostmanCollection.RequestBody(decoratedData.body);
       }
+
+      if(decoratedData.description != null)
+      {
+        nuItemEndpoint.request.description = decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.content) : decoratedData.description.content
+      }
+
+      if(decoratedData.responses && decoratedData.responses.length > 0)
+      {
+        for(const response of decoratedData.responses)
+        {
+          if(response.originalRequest == null)
+          {
+            response.originalRequest = nuItemEndpoint.request.toJSON();
+          }
+          nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
+        }
+
+      }
+
 
       return nuItemEndpoint;
     }));

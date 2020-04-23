@@ -12,6 +12,7 @@ export * as Decorators from './decorators';
 export * as Utilities from './utils';
 export * as Services from './services';
 export const controllers: {[key: string]: DecoratorData} = {};
+export const folders: {[key: string]: DecoratorData} = {};
 
 /*
 Goals:
@@ -24,7 +25,7 @@ Goals:
  */
 export async function load(container: Container): Promise<PostmanCollection.ItemGroupDefinition[]>
 export async function load(container: Container, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
-    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
+    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
 }
 
 /**
@@ -32,7 +33,7 @@ export async function load(container: Container, options?: ExportOptions): Promi
  * {@link https://github.com/inversify/inversify-express-utils#decorators}
  */
 export async function ContainerToItemGroupArray(container: Container, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]>{
-    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
+    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
 }
 
 /**
@@ -43,7 +44,7 @@ export async function ContainerToItemGroupArray(container: Container, options?: 
  */
 export async function ContainerToCollection(container: Container, options?: ExportOptions): Promise<PostmanCollection.Collection>
 {
-    const itemGroup =  await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
+    const itemGroup =  await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
     return toPostmanCollection(itemGroup, options.name, options.uid);
 }
 
@@ -61,7 +62,7 @@ export async function ContainerToCollectionJSON(container: Container): Promise<s
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams, space): Promise<string>
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams = false, space?: number, options?: ExportOptions ): Promise<string>
 {
-    const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), controllers, options);
+    const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
 
     return toJSONSchema(toPostmanCollection(itemGroup, options.name, options.uid), FixQueryParams, space);
 }
