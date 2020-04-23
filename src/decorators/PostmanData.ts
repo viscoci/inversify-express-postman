@@ -1,36 +1,40 @@
-import { DecoratorData } from '../interfaces';
-import { controllers } from '..';
-import { HeaderDefinition, Header } from 'postman-collection';
+import { DecoratorData, Extension } from '../interfaces';
+import { controllers, folders } from '..';
 
 /**
  * Decorator used to add Postman data to an endpoint for exporting
  * @param data {DecoratorData}
  */
-export function PostmanData(data: DecoratorData): (target: any, key: string, value: any) => void
+export function PostmanData(data: DecoratorData): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const extended = function (target: any, key: string, value: any): void
+    const extended = function (target: any, key?: string, value?: any): void
     {
-        controllers[key] = data;
+        if(key === undefined)
+        {
+            if(target.name != null)
+            {
+                if(folders[target.name] == null)
+                {
+                    folders[target.name] = data;
+                    return;
+                }
+
+                folders[target.name] = Object.assign(folders[key], {...data});
+                return;
+            }
+            return;
+        }
+
+        // Key is defined, must be a function?
+        if(controllers[key] == null)
+        {
+            controllers[key] = data;
+            return;
+        }
+
+        controllers[key] = Object.assign(controllers[key], {...data});
     }
 
     return extended;
-}
-
-export function PostmanHeader(headerKey: string, headerValue: string)
-{
-    const extended = function (target: any, key: string, value: any): void
-    {
-        if(controllers[key] == null)
-        {
-            controllers[key] = {}
-        }
-
-        if(controllers[key].headers == null)
-        {
-            controllers[key].headers = new Array<HeaderDefinition>();
-        }
-
-        controllers[key].headers.push(<HeaderDefinition>{key: headerKey, headerValue: value})
-    }
 }

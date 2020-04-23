@@ -1,5 +1,5 @@
-import { controllers } from '..';
-import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, PostmanFuncTest } from '../interfaces'
+import { controllers, folders } from '..';
+import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, PostmanFuncTest, Extension } from '../interfaces'
 
 
 /**
@@ -8,17 +8,20 @@ import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, Po
  * @param test {any} An object (presumably a function) to include as a postman test script
  * @param params {any[]} An params to include with
  */
-export function PostmanTests({paths, funcs, premades}: PostmanTest): (target: any, key: string, value: any) => void
+export function PostmanTests({paths, funcs, premades}: PostmanTest): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const extended = function (target: any, key: string, value: any): void
+    const extended = function (target: any, key?: string, value?: any): void
     {
-        if(controllers[key] == null)
+        const _key = key === undefined ? target.name : key;
+        const group = key === undefined ? folders : controllers;
+
+        if(group[_key] == null)
         {
-            controllers[key] = {};
+            group[_key] = {};
         }
 
-        controllers[key].tests = {paths, funcs, premades};
+        group[_key].tests = {paths, funcs, premades};
 
     }
 
@@ -31,47 +34,51 @@ export function PostmanTests({paths, funcs, premades}: PostmanTest): (target: an
  * @param func {Function} Javascript safe function in which the wrapped code will be taken from. Name must start with either
  * @param listen {PostmanEventListen} When the test script should be called (usually is either `test` or `prerequest`)
  */
-export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[])
+export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[]): Extension
 {
-    const extended = function (target: any, key: string, value: any): void
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const extended = function (target: any, key?: string, value?: any): void
     {
-        if(controllers[key] == null)
+        const _key = key === undefined ? target.name : key;
+        const group = key === undefined ? folders : controllers;
+
+        if(group[_key] == null)
         {
-            controllers[key] = {};
+            group[_key] = {};
         }
 
-        if(controllers[key].tests == null)
+        if(group[_key].tests == null)
         {
-            controllers[key].tests = {};
+            group[_key].tests = {};
         }
 
         if(typeof(func) === "string")
         {
-            if(controllers[key].tests.paths == null)
+            if(group[_key].tests.paths == null)
             {
-                controllers[key].tests.paths = new Array<PostmanPathTest>();
+                group[_key].tests.paths = new Array<PostmanPathTest>();
             }
 
-            controllers[key].tests.paths.push({func, listen});
+            group[_key].tests.paths.push({func, listen});
         }
         else if (Array.isArray(func))
         {
-            if(controllers[key].tests.premades == null)
+            if(group[_key].tests.premades == null)
             {
-                controllers[key].tests.premades = new Array<PostmanPremadeTest>();
+                group[_key].tests.premades = new Array<PostmanPremadeTest>();
             }
 
-            controllers[key].tests.premades.push({func, listen});
+            group[_key].tests.premades.push({func, listen});
         }
 
         else {
 
-            if(controllers[key].tests.funcs == null)
+            if(group[_key].tests.funcs == null)
             {
-                controllers[key].tests.funcs = new Array<PostmanFuncTest>();
+                group[_key].tests.funcs = new Array<PostmanFuncTest>();
             }
 
-            controllers[key].tests.funcs.push({func, listen});
+            group[_key].tests.funcs.push({func, listen});
         }
     }
 

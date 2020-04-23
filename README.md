@@ -5,17 +5,20 @@ Export [inversify-express-utils] metadata to a [Postman Collection] and sync wit
 
 [![NPM](https://nodei.co/npm/inversify-express-postman.png?downloads=true&downloadRank=true)](https://nodei.co/npm/inversify-express-postman/)
 
-|                       **Contents**                    | Examples|
-| ----------------------------------------------------- |:-------:|
-| **[Getting Started](#getting-started)**                   | [Including Body Info Manually](#manually-add-information)     |
-| **[Syncing with Postman API](#syncing-with-postman-api)** | [PostmanApi Example](#postmanapi-example)             |
-| **[Adding Test Scripts](#adding-test-scripts)**           |                                                       |
+|                       Contents                        |                         Examples                      |
+| ----------------------------------------------------- |:-----------------------------------------------------:|
+| [Getting Started](#getting-started)                   | [Container to JSON](#container-to-json)               |
+| [Decorators](#decorators)                             | [Decorator Example](#decorator-example)               |
+| [Syncing with Postman API](#syncing-with-postman-api) | [PostmanApi Example](#postmanapi-example)             |
+| [Adding Test Scripts](#adding-test-scripts)           | [Test Script Example](#prequest-and-test-example)     |
 ___
 
 ### Getting Started
 Once a container has been setup, use one of the top level functions to convert the metadata from the container's express endpoints to a Postman Collection or a JSON of the Collection.
 
 In this example, a container is passed in and a JSON string is returned and logged to the console.
+
+##### Container to JSON
 ```ts
 import { Container } from 'inversify';
 import * as IEPostman from 'inversify-express-postman';
@@ -37,29 +40,26 @@ All of the endpoints are split up by their controllers as folders and the endpoi
 
 To add more information about an endpoint, utilize the [@Decorators](https://github.com/inversify/inversify-express-utils#decorators) included with [inversify-express-utils]. (Some Decorator metadata isn't handled yet)
 
-#### Manually Add Information
-The [PostmanData](./src/decorators/PostmanData.ts) decorator allows the entry of some more Postman Collection supported items.
+### Decorators
+The [PostmanData](./src/decorators/PostmanData.ts) decorator allows the entry of some more Postman Collection supported items. There are a variety of decorators that can be used jointly. A few decorators can be applied to the class controllers. Console warnings should appear if a decorator is not supported. Typescript typings should give an error for any Decorators that won't work on a class.
 
+ The example below shows some valid usage of the included decorators.
+##### Decorator Example
 ```ts
-import * as IEPostman from 'inversify-express-postman';
+import {PostmanBodyRaw, PostmanName, PostmanHeader, PostmanDescription, PostmanResponse } from 'inversify-express-postman/decorators';
 
 @controller("/api/v1/example", LOGGER_TYPES.LoggerMiddleWare)
+@PostmanName("API v1 | Example") // Names the Folder
+@PostmanDescription(path.join(__dirname, "store.md"), "path") // Read in a markdown file and set it as the description
 export class ExampleAPIv1Controller extends ControllerBase {
     ...
 
-    @IEPostman.Decorators.PostmanData({
-        description: "Here is a description about this endpoint",
-        body: {
-            mode: "raw",
-            raw: JSON.stringify({bodyText: "Here is the body text", environmentVariable: "{{ENVIRONMENT_VARIABLE}}"}, null, 2)
-            /** Stringify Output:
-             * {
-             *      "bodyText": "Here is the body text",
-             *      "environmentVariable": "{{ENVIRONMENT_VARIABLE}}"
-             * }
-            */
-        }
-    })
+    @PostmanName("Store Data") // Names the Request
+    @PostmanBodyRaw(JSON.stringify({bodyText: "Here is the body text", environmentVariable: "{{ENVIRONMENT_VARIABLE}}"}, null, 2))
+    @PostmanHeader('Content-Type', 'application/json', false) // False so the value does not get wrapped as an environment variable
+    @PostmanDescription("An example endpoint that stores something")
+    @PostmanResponse({code: 200, responseTime: 200, body: "{'success': true}"}, name: "Store Data Example"}) // Example response
+
     @httpGet("/store")
     async Store(@request() req: Request, @response() res: Response){
         ...
@@ -115,6 +115,7 @@ IEPostman.ContainerToCollection(container, {name: collectionName}).then(async co
 Test scripts are supported and can be associated with an endpoint by using the [PostmanTestFunction] decorators.
 
 In this example, an endpoint has a prerequest and a test function.
+##### Prequest and Test Example
 ```ts
 import * as IEPostman from 'inversify-express-postman';
 
