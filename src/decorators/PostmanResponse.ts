@@ -1,5 +1,5 @@
 import { ResponseDefinition, HeaderDefinition } from "postman-collection";
-import { controllers } from '../index';
+import { Metadata, setupMetadata } from '../index';
 
 export function PostmanResponse(responseDefinition: ResponseDefinition): (target: any, key: string, value: any) => void
 {
@@ -11,18 +11,15 @@ export function PostmanResponse(responseDefinition: ResponseDefinition): (target
             return;
         }
 
-        if(controllers[key] == null)
-        {
-            controllers[key] = {};
-        }
+        const targetName = setupMetadata(target, key);
 
-        if(controllers[key].responses == null)
+        if(Metadata.folders[targetName].controllers[key].responses == null)
         {
-            controllers[key].responses = new Array<ResponseDefinition>();
+            Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition>();
         }
 
 
-        controllers[key].responses.push(responseDefinition);
+        Metadata.folders[targetName].controllers[key].responses.push(responseDefinition);
 
     }
 

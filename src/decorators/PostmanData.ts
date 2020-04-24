@@ -1,5 +1,5 @@
 import { DecoratorData, Extension } from '../interfaces';
-import { controllers, folders } from '..';
+import { Metadata, setupMetadata } from '..';
 
 /**
  * Decorator used to add Postman data to an endpoint for exporting
@@ -10,30 +10,21 @@ export function PostmanData(data: DecoratorData): Extension
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
+        const targetName = setupMetadata(target, key);
         if(key === undefined)
         {
-            if(target.name != null)
-            {
-                if(folders[target.name] == null)
-                {
-                    folders[target.name] = data;
-                    return;
-                }
-
-                folders[target.name] = Object.assign(folders[key], {...data});
-                return;
-            }
+            Metadata.folders[targetName].folder = data;
             return;
         }
 
         // Key is defined, must be a function?
-        if(controllers[key] == null)
+        if(Metadata.folders[targetName].controllers[key] == null)
         {
-            controllers[key] = data;
+            Metadata.folders[targetName].controllers[key] = data;
             return;
         }
 
-        controllers[key] = Object.assign(controllers[key], {...data});
+        Metadata.folders[targetName].controllers[key] = Object.assign(Metadata.folders[targetName].controllers[key], {...data});
     }
 
     return extended;

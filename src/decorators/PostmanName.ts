@@ -1,4 +1,4 @@
-import { controllers, folders } from '..';
+import { Metadata, setupMetadata } from '..';
 import { Extension } from '../interfaces';
 
 /**
@@ -9,15 +9,15 @@ export function PostmanName(Name: string): Extension
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
-        const _key = key === undefined ? target.name : key;
-        const group = key === undefined ? folders : controllers;
-
-        if(group[_key] == null)
+        const targetName = setupMetadata(target, key);
+        if(key == null)
         {
-            group[_key] = {};
+
+            Metadata.folders[targetName].folder.name = Name;
+            return;
         }
 
-        group[_key].name = Name;
+        Metadata.folders[targetName].controllers[key].name = Name;
     }
 
     return extended;

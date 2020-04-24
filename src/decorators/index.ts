@@ -6,3 +6,4 @@ export * from './PostmanDescription';
 export * from './PostmanQueryParam';
 export * from './PostmanName';
 export * from './PostmanResponse';
+export * from './PostmanParent';
