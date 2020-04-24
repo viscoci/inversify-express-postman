@@ -3,6 +3,7 @@ import {DecoratorData, Metadata, ExportOptions} from './interfaces';
 import { Utilities, Decorators } from '.';
 import { PostmanTest, PostmanEventTest } from './interfaces/PostmanTest';
 import { textFromFile } from './utils';
+import { CollectionHandler } from './index';
 
 
 enum PARAMETER_TYPE {
@@ -16,32 +17,30 @@ enum PARAMETER_TYPE {
   NEXT = 7,
 }
 
-export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: [{[key: string]: DecoratorData},{[key: string]: DecoratorData}], options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
-  const folders = decoratorData[0];
-  const controllers = decoratorData[1];
-  return await Promise.all(metadata.map(async (controller) => {
+export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: CollectionHandler, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
 
-    const folderData = folders[controller.controllerMetadata.target.name] || {};
+  const ItemGroups = new Map<string, PostmanCollection.ItemGroupDefinition>();
+  for(const controller of metadata)
+  {
 
-    const CollectDef: PostmanCollection.ItemGroupDefinition = {};
-    CollectDef.name = folderData.name || controller.controllerMetadata.target.name;
+  // }
+  // return await Promise.all(metadata.map(async (controller) => {
 
-    if(folderData.description)
-    {
-      CollectDef.description = folderData.description.type === "path" ? await textFromFile(folderData.description.content) : folderData.description.content || "";
-    }
+    const tname = controller.controllerMetadata.target.name;
+
+    const folderData = decoratorData.folders[tname].folder || {};
 
     const basePath = controller.controllerMetadata.path.split(/[\\/]/);
-
     if(basePath[0] === "")
     {
-      basePath.shift();
+        basePath.shift();
     }
 
 
-    CollectDef.item = await Promise.all(controller.methodMetadata.map(async (endpoint) => {
+    const getItemDefinitions = async () => Promise.all(controller.methodMetadata.map(async (endpoint) => {
 
-      const decoratedData: DecoratorData = controllers[endpoint.key] || {};
+      const decoratedData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
+
       const nuItemEndpoint: PostmanCollection.Item = new PostmanCollection.Item({
         name: decoratedData.name || endpoint.key
       });
@@ -251,8 +250,88 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
       return nuItemEndpoint;
     }));
-    /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
 
-    return CollectDef;
-  }));
+    const iname = folderData.name || tname;
+    let description = "";
+    if(folderData.description)
+    {
+      description = folderData.description.type === "path" ? await textFromFile(folderData.description.content) : folderData.description.content || ""
+    }
+
+    if(folderData.parent != null)
+    {
+      let itemGroup = ItemGroups.get(folderData.parent);
+
+      if(itemGroup == null)
+      {
+        itemGroup = {name: folderData.parent};
+
+      }
+
+      if(itemGroup.item == null)
+      {
+        itemGroup.item = new Array<PostmanCollection.ItemGroupDefinition | PostmanCollection.ItemDefinition>()
+      }
+
+
+
+      const foundIndex = itemGroup.item.findIndex((val) => val.name === iname);
+
+      const getItem = async () => {
+        return {
+          name: iname,
+          description: description.length > 0 ? description : "",
+          item: await getItemDefinitions()
+        }
+      }
+
+      if(foundIndex >= 0)
+      {
+        if((<PostmanCollection.ItemGroupDefinition>itemGroup.item[foundIndex]).item != null)
+        {
+          (<PostmanCollection.ItemGroupDefinition>itemGroup.item[foundIndex]).item.push(... await getItemDefinitions());
+        }
+        else
+        {
+          const item = await getItem();
+          item.item.push(new PostmanCollection.Item(itemGroup.item[foundIndex]));
+
+          itemGroup.item[foundIndex] = item;
+        }
+
+        if(description.length > 0)
+        {
+          itemGroup.item[foundIndex].description += ("\n" + description);
+        }
+
+      }
+      else
+      {
+        itemGroup.item.push(await getItem());
+      }
+      ItemGroups.set(folderData.parent, itemGroup);
+      continue;
+    }
+
+    // Is top level, if group already taken, just adds items and ignores name and description
+
+    const ItemGroup = ItemGroups.get(iname);
+    if(ItemGroup == null)
+    {
+      ItemGroups.set(iname, {
+        name: iname,
+        description: description.length > 0 ? description : "",
+        item: await getItemDefinitions()
+      });
+    }
+    else
+    {
+      ItemGroup.item.push(...await getItemDefinitions());
+      ItemGroups.set(iname, ItemGroup);
+    }
+
+    /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// /// ///
+  }
+
+  return Array.from(ItemGroups.values());
 }

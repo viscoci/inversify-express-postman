@@ -1,5 +1,5 @@
 import { Extension } from '../interfaces';
-import { controllers } from '..';
+import { Metadata, setupMetadata } from '..';
 import { HeaderDefinition, Header } from 'postman-collection';
 
 /**
@@ -13,22 +13,21 @@ export function PostmanHeader(headerKey: string, headerValue: string, envVariabl
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
+        const targetName = setupMetadata(target, key);
         if(key === undefined)
         {
-            console.warn('Cannot assign headers to a Controller Class', '| Class:', target.name);
+            console.warn('Cannot assign headers to a Controller Class', '| Class:', targetName);
             return;
         }
-        if(controllers[key] == null)
+
+
+
+        if(Metadata.folders[targetName].controllers[key].headers == null)
         {
-            controllers[key] = {}
+            Metadata.folders[targetName].controllers[key].headers = new Array<HeaderDefinition>();
         }
 
-        if(controllers[key].headers == null)
-        {
-            controllers[key].headers = new Array<HeaderDefinition>();
-        }
-
-        controllers[key].headers.push(<HeaderDefinition>{key: headerKey, value:  envVariable ? `{{${headerValue}}}` : headerValue})
+        Metadata.folders[targetName].controllers[key].headers.push(<HeaderDefinition>{key: headerKey, value:  envVariable ? `{{${headerValue}}}` : headerValue})
     }
 
     return extended;

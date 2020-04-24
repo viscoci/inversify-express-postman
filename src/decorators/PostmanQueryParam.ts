@@ -1,4 +1,4 @@
-import { controllers } from '..';
+import { Metadata, setupMetadata } from '..';
 import { Extension } from '../interfaces';
 
 /**
@@ -12,23 +12,22 @@ export function PostmanQueryParam(paramName: string, paramValue: string, envVari
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
+        const targetName = setupMetadata(target, key);
         if(key === undefined)
         {
-            console.warn('Cannot assign headers to a Controller Class', '| Class:', target.name);
+            console.warn('Cannot assign headers to a Controller Class', '| Class:', targetName);
             return;
         }
-        if(controllers[key] == null)
+
+
+
+        if(Metadata.folders[targetName].controllers[key].queryParams == null)
         {
-            controllers[key] = {}
+            Metadata.folders[targetName].controllers[key].queryParams = {};
         }
 
-        if(controllers[key].queryParams == null)
-        {
-            controllers[key].queryParams = {};
-        }
 
-
-        controllers[key].queryParams[paramName] = envVariable ? `{{${paramValue}}}` : paramValue;
+        Metadata.folders[targetName].controllers[key].queryParams[paramName] = envVariable ? `{{${paramValue}}}` : paramValue;
     }
 
     return extended;

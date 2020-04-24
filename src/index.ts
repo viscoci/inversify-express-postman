@@ -11,8 +11,65 @@ export * as Types from './interfaces';
 export * as Decorators from './decorators';
 export * as Utilities from './utils';
 export * as Services from './services';
-export const controllers: {[key: string]: DecoratorData} = {};
-export const folders: {[key: string]: DecoratorData} = {};
+// export const controllers: {[key: string]: DecoratorData} = {};
+// export const folders: {[key: string]: DecoratorData} = {};
+
+export type TargetObject = {
+
+    folder: DecoratorData;
+    controllers: {
+        [key: string]: DecoratorData;
+    };
+}
+
+export type CollectionHandler = {
+    knownGroups: string[];
+    folders: {
+        [targetname: string]: TargetObject;
+    };
+
+}
+
+export const Metadata: CollectionHandler = {knownGroups: new Array<string>(), folders: {}}
+
+/**
+ * Handles any undefined elements and merges undefined groups into the next defined target
+ */
+export function setupMetadata(target: any, keyName?: string)
+{
+    const setup = (targetName: string) =>
+    {
+        //console.log(JSON.stringify(Metadata.folders[targetName], null, 2));
+        if(Metadata.folders[targetName] == null)
+        {
+            Metadata.folders[targetName] = {folder: {}, controllers: {}}
+        }
+
+        if(keyName == null)
+        {
+            if(Metadata.folders["undefined"] != null && Metadata.folders["undefined"].controllers != null)
+            {
+                Metadata.folders[targetName].controllers = Object.assign(Metadata.folders[targetName].controllers, {...Metadata.folders["undefined"].controllers})
+            }
+            return targetName;
+        }
+
+        if(Metadata.folders[targetName].controllers == null)
+        {
+            Metadata.folders[targetName].controllers = {};
+        }
+
+        if(Metadata.folders[targetName].controllers[keyName] == null)
+        {
+            Metadata.folders[targetName].controllers[keyName] = {};
+        }
+
+        return targetName;
+    }
+
+    return setup(target.name);
+
+}
 
 /*
 Goals:
@@ -25,7 +82,7 @@ Goals:
  */
 export async function load(container: Container): Promise<PostmanCollection.ItemGroupDefinition[]>
 export async function load(container: Container, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
-    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
+    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), Metadata, options);
 }
 
 /**
@@ -33,7 +90,7 @@ export async function load(container: Container, options?: ExportOptions): Promi
  * {@link https://github.com/inversify/inversify-express-utils#decorators}
  */
 export async function ContainerToItemGroupArray(container: Container, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]>{
-    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
+    return toPostmanCollectionDefinition(invExpress.getRawMetadata(container), Metadata, options);
 }
 
 /**
@@ -44,7 +101,7 @@ export async function ContainerToItemGroupArray(container: Container, options?: 
  */
 export async function ContainerToCollection(container: Container, options?: ExportOptions): Promise<PostmanCollection.Collection>
 {
-    const itemGroup =  await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
+    const itemGroup =  await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), Metadata, options);
     return toPostmanCollection(itemGroup, options.name, options.uid);
 }
 
@@ -62,7 +119,7 @@ export async function ContainerToCollectionJSON(container: Container): Promise<s
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams, space): Promise<string>
 export async function ContainerToCollectionJSON(container: Container, FixQueryParams = false, space?: number, options?: ExportOptions ): Promise<string>
 {
-    const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), [folders, controllers], options);
+    const itemGroup = await toPostmanCollectionDefinition(invExpress.getRawMetadata(container), Metadata, options);
 
     return toJSONSchema(toPostmanCollection(itemGroup, options.name, options.uid), FixQueryParams, space);
 }

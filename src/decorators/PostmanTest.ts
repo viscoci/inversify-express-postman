@@ -1,4 +1,4 @@
-import { controllers, folders } from '..';
+import { Metadata, setupMetadata } from '..';
 import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, PostmanFuncTest, Extension } from '../interfaces'
 
 
@@ -13,15 +13,14 @@ export function PostmanTests({paths, funcs, premades}: PostmanTest): Extension
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
-        const _key = key === undefined ? target.name : key;
-        const group = key === undefined ? folders : controllers;
-
-        if(group[_key] == null)
+        const targetName = setupMetadata(target, key);
+        if(key == null)
         {
-            group[_key] = {};
+            Metadata.folders[targetName].folder.tests = {paths, funcs, premades};
+            return;
         }
 
-        group[_key].tests = {paths, funcs, premades};
+        Metadata.folders[targetName].controllers[key].tests = {paths, funcs, premades};
 
     }
 
@@ -39,46 +38,78 @@ export function PostmanTestFunction(listen: PostmanEventListen, func: Function |
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
-        const _key = key === undefined ? target.name : key;
-        const group = key === undefined ? folders : controllers;
-
-        if(group[_key] == null)
+        const targetName = setupMetadata(target, key);
+        if(key == null)
         {
-            group[_key] = {};
+
+            if(Metadata.folders[targetName].folder.tests == null)
+            {
+                Metadata.folders[targetName].folder.tests = {};
+            }
+
+            if(typeof(func) === "string")
+            {
+                if(Metadata.folders[targetName].folder.tests.paths == null)
+                {
+                    Metadata.folders[targetName].folder.tests.paths = new Array<PostmanPathTest>();
+                }
+
+                Metadata.folders[targetName].folder.tests.paths.push({func, listen});
+            }
+            else if (Array.isArray(func))
+            {
+                if(Metadata.folders[targetName].folder.tests.premades == null)
+                {
+                    Metadata.folders[targetName].folder.tests.premades = new Array<PostmanPremadeTest>();
+                }
+
+                Metadata.folders[targetName].folder.tests.premades.push({func, listen});
+            }
+            else {
+
+                if(Metadata.folders[targetName].folder.tests.funcs == null)
+                {
+                    Metadata.folders[targetName].folder.tests.funcs = new Array<PostmanFuncTest>();
+                }
+
+                Metadata.folders[targetName].folder.tests.funcs.push({func, listen});
+            }
+
+            return;
         }
 
-        if(group[_key].tests == null)
+        if(Metadata.folders[targetName].controllers[key].tests == null)
         {
-            group[_key].tests = {};
+            Metadata.folders[targetName].controllers[key].tests = {};
         }
 
         if(typeof(func) === "string")
         {
-            if(group[_key].tests.paths == null)
+            if(Metadata.folders[targetName].controllers[key].tests.paths == null)
             {
-                group[_key].tests.paths = new Array<PostmanPathTest>();
+                Metadata.folders[targetName].controllers[key].tests.paths = new Array<PostmanPathTest>();
             }
 
-            group[_key].tests.paths.push({func, listen});
+            Metadata.folders[targetName].controllers[key].tests.paths.push({func, listen});
         }
         else if (Array.isArray(func))
         {
-            if(group[_key].tests.premades == null)
+            if(Metadata.folders[targetName].controllers[key].tests.premades == null)
             {
-                group[_key].tests.premades = new Array<PostmanPremadeTest>();
+                Metadata.folders[targetName].controllers[key].tests.premades = new Array<PostmanPremadeTest>();
             }
 
-            group[_key].tests.premades.push({func, listen});
+            Metadata.folders[targetName].controllers[key].tests.premades.push({func, listen});
         }
 
         else {
 
-            if(group[_key].tests.funcs == null)
+            if(Metadata.folders[targetName].controllers[key].tests.funcs == null)
             {
-                group[_key].tests.funcs = new Array<PostmanFuncTest>();
+                Metadata.folders[targetName].controllers[key].tests.funcs = new Array<PostmanFuncTest>();
             }
 
-            group[_key].tests.funcs.push({func, listen});
+            Metadata.folders[targetName].controllers[key].tests.funcs.push({func, listen});
         }
     }
 
