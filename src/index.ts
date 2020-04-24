@@ -50,6 +50,7 @@ export function setupMetadata(target: any, keyName?: string)
             if(Metadata.folders["undefined"] != null && Metadata.folders["undefined"].controllers != null)
             {
                 Metadata.folders[targetName].controllers = Object.assign(Metadata.folders[targetName].controllers, {...Metadata.folders["undefined"].controllers})
+                delete Metadata.folders["undefined"].controllers;
             }
             return targetName;
         }

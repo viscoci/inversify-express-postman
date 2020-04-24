@@ -1,7 +1,7 @@
-import { ResponseDefinition, HeaderDefinition } from "postman-collection";
+import { ResponseDefinition } from '../interfaces';
 import { Metadata, setupMetadata } from '../index';
 
-export function PostmanResponse(responseDefinition: ResponseDefinition): (target: any, key: string, value: any) => void
+export function PostmanResponse(responseDefinition: ResponseDefinition | string): (target: any, key: string, value: any) => void
 {
     const extended = function (target: any, key: string, value: any): void
     {
@@ -15,7 +15,7 @@ export function PostmanResponse(responseDefinition: ResponseDefinition): (target
 
         if(Metadata.folders[targetName].controllers[key].responses == null)
         {
-            Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition>();
+            Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition | string>();
         }
 
         Metadata.folders[targetName].controllers[key].responses.push(responseDefinition);

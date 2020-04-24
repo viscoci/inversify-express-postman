@@ -9,7 +9,7 @@ export function PostmanDescription(description: string, type: "path" | "text" = 
         const targetName = setupMetadata(target, key);
         if(key == null)
         {
-            Metadata.folders[targetName].folder.description = {content: description, type: type};
+            Metadata.folders[targetName].folder.description = {value: description, type: type};
             return;
         }
 
@@ -18,7 +18,7 @@ export function PostmanDescription(description: string, type: "path" | "text" = 
             Metadata.folders[targetName].controllers[key] = {};
         }
 
-        Metadata.folders[targetName].controllers[key].description = {content: description, type: type};
+        Metadata.folders[targetName].controllers[key].description = {value: description, type: type};
     }
 
     return extended;
