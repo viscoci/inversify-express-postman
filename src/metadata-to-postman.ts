@@ -1,9 +1,10 @@
 import * as PostmanCollection from 'postman-collection';
-import {DecoratorData, Metadata, ExportOptions} from './interfaces';
+import {DecoratorData, Metadata, ExportOptions, ResponseDefinition} from './interfaces';
 import { Utilities, Decorators } from '.';
 import { PostmanTest, PostmanEventTest } from './interfaces/PostmanTest';
 import { textFromFile } from './utils';
 import { CollectionHandler } from './index';
+import * as fs from 'fs';
 
 
 enum PARAMETER_TYPE {
@@ -18,6 +19,9 @@ enum PARAMETER_TYPE {
 }
 
 export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: CollectionHandler, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
+
+  fs.writeFileSync("D:/YUR/Postman Export/metadata.json", JSON.stringify(metadata, null, 2));
+  fs.writeFileSync("D:/YUR/Postman Export/decoratorData.json", JSON.stringify(decoratorData, null, 2));
 
   const ItemGroups = new Map<string, PostmanCollection.ItemGroupDefinition>();
   for(const controller of metadata)
@@ -141,10 +145,11 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
         {
           if(decoratedData.requestParams != null && decoratedData.requestParams.length > 0)
           {
-            const rIndx = decoratedData.requestParams.findIndex((curObj) => curObj.index === i);
+            const rIndx = decoratedData.requestParams.findIndex((curObj) => curObj.index === i || curObj.index === splicedPath[i].substring(1));
             if(rIndx >= 0)
             {
-              splicedPath[i] = `{{${decoratedData.requestParams[rIndx].value}}}`;
+              // Decorator handles environment variable or not
+              splicedPath[i] = decoratedData.requestParams[rIndx].value;
             }
             else
             {
@@ -226,27 +231,46 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
       if(decoratedData.body != null)
       {
+        (<PostmanCollection.RequestBodyDefinition>decoratedData.body).raw = decoratedData.body.raw.type === "path" ? await textFromFile(decoratedData.body.raw.value) : decoratedData.body.raw.value;
         nuItemEndpoint.request.body = new PostmanCollection.RequestBody(decoratedData.body);
       }
 
       if(decoratedData.description != null)
       {
-        nuItemEndpoint.request.description = decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.content) : decoratedData.description.content
+        nuItemEndpoint.request.description = decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.value) : decoratedData.description.value
       }
 
-      if(decoratedData.responses && decoratedData.responses.length > 0)
+      if(decoratedData.responses)
       {
-        for(const response of decoratedData.responses)
+        if(decoratedData.responses.length > 0 && typeof(decoratedData.responses[0]) !== "string")
         {
-          if(response.originalRequest == null)
+          for(const response of <Array<ResponseDefinition>>decoratedData.responses)
           {
-            response.originalRequest = nuItemEndpoint.request.toJSON();
+            if(response.originalRequest == null)
+            {
+              response.originalRequest = nuItemEndpoint.request.toJSON();
+            }
+
+            (<PostmanCollection.ResponseDefinition>response).body = response.body.type === "path" ? await textFromFile(response.body.value) : response.body.value;
+
+            nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
           }
-
-          response.body = await textFromFile(response.body);
-
-          nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
         }
+        else
+        {
+          for(const respPath of <Array<string>>decoratedData.responses)
+          {
+            const response = <PostmanCollection.ResponseDefinition>JSON.parse(await textFromFile(respPath));
+
+            if(response.originalRequest == null)
+            {
+              response.originalRequest = nuItemEndpoint.request.toJSON();
+            }
+
+            nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
+          }
+        }
+
 
       }
 
@@ -258,7 +282,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
     let description = "";
     if(folderData.description)
     {
-      description = folderData.description.type === "path" ? await textFromFile(folderData.description.content) : folderData.description.content || ""
+      description = folderData.description.type === "path" ? await textFromFile(folderData.description.value) : folderData.description.value || ""
     }
 
     if(folderData.parent != null)
