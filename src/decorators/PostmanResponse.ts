@@ -18,7 +18,6 @@ export function PostmanResponse(responseDefinition: ResponseDefinition): (target
             Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition>();
         }
 
-
         Metadata.folders[targetName].controllers[key].responses.push(responseDefinition);
 
     }
