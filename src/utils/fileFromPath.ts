@@ -62,5 +62,6 @@ export async function textFromFile(path: string): Promise<string>
 
     } catch (error) {
         console.log('fileFromPath failed', error);
+        return path;
     }
 }

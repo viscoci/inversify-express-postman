@@ -242,6 +242,9 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
           {
             response.originalRequest = nuItemEndpoint.request.toJSON();
           }
+
+          response.body = await textFromFile(response.body);
+
           nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
         }
 
