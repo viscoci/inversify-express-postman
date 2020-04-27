@@ -20,8 +20,6 @@ enum PARAMETER_TYPE {
 
 export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: CollectionHandler, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
 
-  fs.writeFileSync("D:/YUR/Postman Export/metadata.json", JSON.stringify(metadata, null, 2));
-  fs.writeFileSync("D:/YUR/Postman Export/decoratorData.json", JSON.stringify(decoratorData, null, 2));
 
   const ItemGroups = new Map<string, PostmanCollection.ItemGroupDefinition>();
   for(const controller of metadata)
