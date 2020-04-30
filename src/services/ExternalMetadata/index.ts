@@ -1,9 +1,9 @@
-import { ExternalMetadata, FileTypings, FileType } from '../../interfaces/ExportOptions';
+import { FileTypings, FileType } from '../../interfaces/ExportOptions';
 import * as fs from 'fs';
 import path = require('path');
 import { textFromFile } from '../../utils';
 import { CollectionHandler } from '../../index';
-import { Metadata, PostmanEventTest } from '../../interfaces';
+import { Metadata, PostmanEventTest, ExternalMetadata } from '../../interfaces';
 import { ResponseDefinition } from '../../interfaces/DecoratorData';
 import { interfaces } from 'inversify-express-utils';
 
@@ -14,11 +14,11 @@ export class ExternalMetadataHandler
 {
     static get DefaultFileTypes(): FileTypings<FileType> {
         return {
-            requestbody: {id: "body", ext: "json"},
-            examples: {id: "example", ext: "json"},
-            description: {id: "", ext: "md"},
-            pretests: {id: "pre.test", ext: "js"},
-            tests: {id: "test", ext: "js"}
+            requestbody: {id: "body", ext: "json", root: "", autogen: true},
+            examples: {id: "example", ext: "json", root: "", autogen: true},
+            description: {id: "", ext: "md", root: "", autogen: true},
+            pretests: {id: "pre.test", ext: "js", root: "", autogen: true},
+            tests: {id: "test", ext: "js", root: "", autogen: true}
         }
     }
 
@@ -69,7 +69,9 @@ export class ExternalMetadataHandler
                 }
             }
 
-            return path.join(this.root, `${path.join(...split)}${this.filetypes[fileType].id.length > 0 ? this.seperator : ""}${this.filetypes[fileType].id}.${this.filetypes[fileType].ext}`);
+            const rootByType = path.join(this.root, this.filetypes[fileType].root);
+
+            return path.join(rootByType, `${path.join(...split)}${this.filetypes[fileType].id.length > 0 ? this.seperator : ""}${this.filetypes[fileType].id}.${this.filetypes[fileType].ext}`);
         } catch (error) {
             console.error(`FAILED TO JOIN PATH USING VARIABLES`, {
                 fileName,
@@ -122,6 +124,10 @@ export class ExternalMetadataHandler
                     continue;
                 }
 
+                if(!this.filetypes[key].autogen)
+                {
+                    continue;
+                }
 
 
                 if(isFolder)

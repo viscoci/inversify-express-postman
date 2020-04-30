@@ -1,6 +1,16 @@
 import { ExternalMetadataHandler } from '../services/ExternalMetadata/index';
+import { ExternalMetadata } from './ExternalMetadata';
 
-export type FileType = {id: string; ext: string};
+export type FileType = {
+  /** A name for associating the file type */
+  id: string;
+  /** File extension without a period */
+  ext: string;
+  /** Location to start storing the files of this type */
+  root: string;
+  /**Whether to auto generate a blank file if it doesn't exist */
+  autogen: boolean;
+};
 
 export type FileTypings<T> = {
     tests?: T;
