@@ -5,6 +5,7 @@ import { PostmanTest, PostmanEventTest } from './interfaces/PostmanTest';
 import { textFromFile } from './utils';
 import { CollectionHandler } from './index';
 import * as fs from 'fs';
+import { ExternalMetadataHandler } from './services/ExternalMetadata/index';
 
 
 enum PARAMETER_TYPE {
@@ -21,12 +22,26 @@ enum PARAMETER_TYPE {
 export default async function toPostmanCollectionDefinition(metadata: Metadata[], decoratorData: CollectionHandler, options?: ExportOptions): Promise<PostmanCollection.ItemGroupDefinition[]> {
 
 
+  let extmetaHandler: ExternalMetadataHandler | undefined;
+  //console.log('Before', JSON.stringify(decoratorData, null, 2));
+  if(options.extmeta != null)
+  {
+    extmetaHandler = new ExternalMetadataHandler(options.extmeta);
+  }
+
   const ItemGroups = new Map<string, PostmanCollection.ItemGroupDefinition>();
   for(const controller of metadata)
   {
-
   // }
   // return await Promise.all(metadata.map(async (controller) => {
+
+
+    if(extmetaHandler != null)
+    {
+
+      extmetaHandler.ProcessFolderMetaData(controller, decoratorData);
+    }
+
 
     const tname = controller.controllerMetadata.target.name;
 
@@ -40,6 +55,11 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
 
     const getItemDefinitions = async () => Promise.all(controller.methodMetadata.map(async (endpoint) => {
+
+      if(extmetaHandler != null)
+      {
+          extmetaHandler.ProcessEndpointMetaData(controller, decoratorData, endpoint);
+      }
 
       const decoratedData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
 
@@ -240,10 +260,15 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
       if(decoratedData.responses)
       {
-        if(decoratedData.responses.length > 0 && typeof(decoratedData.responses[0]) !== "string")
+        if(decoratedData.responses.length > 0)
         {
+          // TODO splitting this into different arrays might be a good idea
           for(const response of <Array<ResponseDefinition>>decoratedData.responses)
           {
+            if(typeof(response) === "string")
+            {
+                continue;
+            }
             if(response.originalRequest == null)
             {
               response.originalRequest = nuItemEndpoint.request.toJSON();
@@ -253,23 +278,34 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
             nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
           }
-        }
-        else
-        {
+
           for(const respPath of <Array<string>>decoratedData.responses)
           {
-            const response = <PostmanCollection.ResponseDefinition>JSON.parse(await textFromFile(respPath));
 
-            if(response.originalRequest == null)
+            if(typeof(respPath) !== "string")
             {
-              response.originalRequest = nuItemEndpoint.request.toJSON();
+                continue;
+            }
+            try {
+              const txtFrmFile = await textFromFile(respPath);
+              if(txtFrmFile.length <= 0)
+              {
+                continue;
+              }
+              const response = <PostmanCollection.ResponseDefinition>JSON.parse(txtFrmFile);
+
+              if(response.originalRequest == null)
+              {
+                response.originalRequest = nuItemEndpoint.request.toJSON();
+              }
+
+              nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
+            } catch (error) {
+              console.error('Error while parsing data from response path', respPath);
             }
 
-            nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
           }
         }
-
-
       }
 
 

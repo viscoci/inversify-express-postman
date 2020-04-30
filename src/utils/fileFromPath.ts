@@ -16,7 +16,9 @@ export async function functionFromFile(path: string): Promise<string[]>
             // is absolute path
 
             const request = rp(path);
-            request.catch(err => console.error(err));
+            request.catch(err => {
+                throw new Error(err);
+            });
 
             const body = await request;
 
@@ -25,13 +27,18 @@ export async function functionFromFile(path: string): Promise<string[]>
         }
         else
         {
+            if(!fs.existsSync(path))
+            {
+                throw new Error("throw new Error('invalid path provided')");
+            }
             fileText = fs.readFileSync(path, {encoding: 'UTF-8'});
         }
 
         return Utilities.newLineSplitter(Utilities.functionStripper(fileText));
 
     } catch (error) {
-        console.log('fileFromPath failed', error);
+        console.error('textFromFile failed from path', path);
+        return error;
     }
 
 }
@@ -47,7 +54,9 @@ export async function textFromFile(path: string): Promise<string>
             // is absolute path
 
             const request = rp(path);
-            request.catch(err => console.error(err));
+            request.catch(err => {
+                throw new Error(err);
+            });
 
             const body = await request;
 
@@ -56,12 +65,16 @@ export async function textFromFile(path: string): Promise<string>
         }
         else
         {
+            if(!fs.existsSync(path))
+            {
+                throw new Error("throw new Error('invalid path provided')");
+            }
             fileText = fs.readFileSync(path, {encoding: 'UTF-8'});
         }
         return fileText;
 
     } catch (error) {
-        console.log('fileFromPath failed', error);
-        return path;
+        console.error('textFromFile failed from path', path);
+        return error;
     }
 }
