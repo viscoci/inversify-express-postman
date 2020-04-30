@@ -122,7 +122,7 @@ export class ExternalMetadataHandler
                     continue;
                 }
 
-                console.log('File at path does not exists, generating...', paths[key]);
+
 
                 if(isFolder)
                 {
@@ -131,7 +131,7 @@ export class ExternalMetadataHandler
                         case "tests":
                         case "pretests":
                         case "description":
-
+                            console.log('File at path does not exist, generating...', paths[key]);
                             this.ensureDirectoryExistence(paths[key]);
                             fs.writeFileSync(paths[key], "");
                             break;
@@ -139,7 +139,7 @@ export class ExternalMetadataHandler
                 }
                 else
                 {
-
+                    console.log('File at path does not exist, generating...', paths[key]);
                     this.ensureDirectoryExistence(paths[key]);
                     fs.writeFileSync(paths[key], "");
                 }
@@ -233,10 +233,10 @@ export class ExternalMetadataHandler
         const tname = metadata.controllerMetadata.target.name;
         const basePath = metadata.controllerMetadata.path;
 
-        console.log(`basePath==${basePath}`);
-        console.log(`endpoint==${endpoint.path}`);
+        // console.log(`basePath==${basePath}`);
+        // console.log(`endpoint==${endpoint.path}`);
         const jointPath = path.join(basePath, endpoint.path);
-        console.log(`conjoine==${jointPath}`);
+        //console.log(`conjoine==${jointPath}`);
         const Files = this.ReadMetadata(jointPath, false);
 
         const eKey = endpoint.key;

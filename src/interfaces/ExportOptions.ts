@@ -11,28 +11,6 @@ export type FileTypings<T> = {
     requestbody?: T;
 }
 
-export type ExternalMetadata =
-{
-    /**
-     * Path to the directory where documenation data is stored
-     */
-    root: string;
-    /**
-     * Whether to override decorator data
-     */
-    override?: boolean;
-    autogenerate?: boolean;
-    seperator?: string;
-
-    filetypes?: FileTypings<FileType>;
-
-    /**
-     * Used to replace a value in a path. Useful if a doc path doesn't directly align with directory structure
-     */
-    replacements?: {[original: string]: string};
-
-    reqparamreplace?: string;
-}
 
 export type ExportOptions =
 {

@@ -23,7 +23,6 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
 
 
   let extmetaHandler: ExternalMetadataHandler | undefined;
-  //console.log('Before', JSON.stringify(decoratorData, null, 2));
   if(options.extmeta != null)
   {
     extmetaHandler = new ExternalMetadataHandler(options.extmeta);
@@ -32,13 +31,8 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
   const ItemGroups = new Map<string, PostmanCollection.ItemGroupDefinition>();
   for(const controller of metadata)
   {
-  // }
-  // return await Promise.all(metadata.map(async (controller) => {
-
-
     if(extmetaHandler != null)
     {
-
       extmetaHandler.ProcessFolderMetaData(controller, decoratorData);
     }
 
@@ -250,12 +244,21 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
       if(decoratedData.body != null)
       {
         (<PostmanCollection.RequestBodyDefinition>decoratedData.body).raw = decoratedData.body.raw.type === "path" ? await textFromFile(decoratedData.body.raw.value) : decoratedData.body.raw.value;
-        nuItemEndpoint.request.body = new PostmanCollection.RequestBody(decoratedData.body);
+
+        if((<PostmanCollection.RequestBodyDefinition>decoratedData.body).raw.length > 0)
+        {
+          nuItemEndpoint.request.body = new PostmanCollection.RequestBody(decoratedData.body);
+        }
+
       }
 
       if(decoratedData.description != null)
       {
-        nuItemEndpoint.request.description = decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.value) : decoratedData.description.value
+        const desc =  decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.value) : decoratedData.description.value
+        if(desc.length > 0)
+        {
+          nuItemEndpoint.request.description = desc;
+        }
       }
 
       if(decoratedData.responses)
@@ -275,6 +278,7 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
             }
 
             (<PostmanCollection.ResponseDefinition>response).body = response.body.type === "path" ? await textFromFile(response.body.value) : response.body.value;
+
 
             nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
           }
@@ -297,6 +301,11 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
               if(response.originalRequest == null)
               {
                 response.originalRequest = nuItemEndpoint.request.toJSON();
+              }
+
+              if(typeof (response.body) !== "string")
+              {
+                response.body = JSON.stringify(response.body, null, 2);
               }
 
               nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
