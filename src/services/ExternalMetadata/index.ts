@@ -169,6 +169,7 @@ export class ExternalMetadataHandler
 
         for(const key in Files)
         {
+
             switch(<FileTypes>key)
             {
                 case "tests":
@@ -239,6 +240,7 @@ export class ExternalMetadataHandler
         const tname = metadata.controllerMetadata.target.name;
         const basePath = metadata.controllerMetadata.path;
 
+
         // console.log(`basePath==${basePath}`);
         // console.log(`endpoint==${endpoint.path}`);
         const jointPath = path.join(basePath, endpoint.path);
@@ -298,8 +300,10 @@ export class ExternalMetadataHandler
 
                 case "requestbody":
                 {
-                    if(!this.override && decordata.folders[tname].controllers[eKey].body != null) {break;}
-
+                    if(!this.override && decordata.folders[tname].controllers[eKey].body != null)
+                    {
+                        break;
+                    }
                     decordata.folders[tname].controllers[eKey].body =  {mode: "raw", raw: {value: Files[key], type: "path"}};
                     break;
                 }

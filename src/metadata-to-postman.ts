@@ -48,278 +48,350 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
     }
 
 
-    const getItemDefinitions = async () => Promise.all(controller.methodMetadata.map(async (endpoint) => {
+    const getItemDefinitions = async () => {
 
-      if(extmetaHandler != null)
+      const map = new Map<string, PostmanCollection.Item>();
+
+      for(const endpoint of controller.methodMetadata)
       {
-          extmetaHandler.ProcessEndpointMetaData(controller, decoratorData, endpoint);
-      }
 
-      const decoratedData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
-
-      const nuItemEndpoint: PostmanCollection.Item = new PostmanCollection.Item({
-        name: decoratedData.name || endpoint.key
-      });
-
-
-      //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// TESTS
-      //// //// //// //// //// //// TESTS
-      const tests: PostmanTest = {
-        funcs: new Array<PostmanEventTest<Function>>(),
-        paths: new Array<PostmanEventTest<string>>(),
-        premades: new Array<PostmanEventTest<string[]>>()
-      };
-
-      if(folderData.tests)
-      {
-        if(folderData.tests.funcs) {tests.funcs.push(...folderData.tests.funcs);}
-        if(folderData.tests.paths) {tests.paths.push(...folderData.tests.paths);}
-        if(folderData.tests.premades) {tests.premades.push(...folderData.tests.premades);}
-      }
-
-      if(decoratedData.tests)
-      {
-        if(decoratedData.tests.funcs) {tests.funcs.push(...decoratedData.tests.funcs);}
-        if(decoratedData.tests.paths) {tests.paths.push(...decoratedData.tests.paths);}
-        if(decoratedData.tests.premades) {tests.premades.push(...decoratedData.tests.premades);}
-      }
-
-      if(tests.premades.length > 0)
-      {
-        for(const premade of tests.premades)
+        if(extmetaHandler != null)
         {
-          // TODO : Premades (should work) have not been tested
-          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-            listen: premade.listen,
-            script: new PostmanCollection.Script({
-              exec: premade.func,
-              type: "text/javascript"
-            })
-          }));
-        }
-      }
-
-      if (tests.funcs.length > 0)
-      {
-        // Function Obj
-        for(const func of tests.funcs)
-        {
-          // Currently Supported
-          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-            listen: func.listen,
-            script: new PostmanCollection.Script({
-              exec: Utilities.toEventExec(func.func),
-              type: "text/javascript"
-            })
-          }));
-        }
-      }
-
-      if(tests.paths.length > 0)
-      {
-        // TODO : Paths have not been tested
-        for(const path of tests.paths)
-        {
-          nuItemEndpoint.events.add(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
-            listen: path.listen,
-            script: new PostmanCollection.Script({
-              exec: await Utilities.functionFromFile(path.func),
-              type: "text/javascript"
-            })
-          }));
-        }
-      }
-      // // // End TESTS \\ \\ \\
-      //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-
-      //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// Query Params / Headers / Request Params
-      //// //// //// //// //// Query Params / Headers / Request Params
-
-      // Split the path up, locate an params and their indexes. Replace with new value
-      const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
-      const headers = new Array<PostmanCollection.HeaderDefinition>();
-
-      if(decoratedData.headers != null && decoratedData.headers.length > 0)
-      {
-        headers.push(...decoratedData.headers)
-      }
-
-      const splicedPath = endpoint.path.split(/[\\/]/);
-
-      if(splicedPath[0] === "")
-      {
-        splicedPath.shift();
-      }
-
-      for(let i = 0; i < splicedPath.length; i++)
-      {
-        if(splicedPath[i].startsWith(":"))
-        {
-          if(decoratedData.requestParams != null && decoratedData.requestParams.length > 0)
+          if(decoratorData.folders[tname].controllers != null)
           {
-            const rIndx = decoratedData.requestParams.findIndex((curObj) => curObj.index === i || curObj.index === splicedPath[i].substring(1));
-            if(rIndx >= 0)
+            const name = endpoint.key;
+
+            if(decoratorData.folders[tname].controllers[endpoint.key] != null)
             {
-              // Decorator handles environment variable or not
-              splicedPath[i] = decoratedData.requestParams[rIndx].value;
+              if(map.get(decoratorData.folders[tname].controllers[endpoint.key].name || endpoint.key) == null)
+              {
+                extmetaHandler.ProcessEndpointMetaData(controller, decoratorData, endpoint);
+              }
+            }
+            else if(map.get(endpoint.key) == null)
+            {
+                extmetaHandler.ProcessEndpointMetaData(controller, decoratorData, endpoint);
+            }
+          }
+          else
+          {
+            if(map.get(endpoint.key) == null)
+            {
+              extmetaHandler.ProcessEndpointMetaData(controller, decoratorData, endpoint);
+            }
+          }
+
+        }
+
+        const decoratedData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
+
+        let epName = decoratedData.name || endpoint.key;
+
+        if(map.get(epName) != null)
+        {
+            // If an endpoint has already been made with this name. Rename it to include the request Method at the beginning of the name
+            const firstItem = map.get(epName);
+
+
+            firstItem.name = `[${firstItem.request.method.toUpperCase()}] ${firstItem.name}`;
+
+            map.set(firstItem.name, firstItem);
+            map.delete(epName);
+
+            epName = `[${endpoint.method.toUpperCase()}] ${epName}`;
+        }
+
+        const nuItemEndpoint: PostmanCollection.Item = new PostmanCollection.Item({
+          name: epName
+        });
+
+
+        //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// TESTS
+        //// //// //// //// //// //// TESTS
+        const tests: PostmanTest = {
+          funcs: new Array<PostmanEventTest<Function>>(),
+          paths: new Array<PostmanEventTest<string>>(),
+          premades: new Array<PostmanEventTest<string[]>>()
+        };
+
+        if(folderData.tests)
+        {
+          if(folderData.tests.funcs) {tests.funcs.push(...folderData.tests.funcs);}
+          if(folderData.tests.paths) {tests.paths.push(...folderData.tests.paths);}
+          if(folderData.tests.premades) {tests.premades.push(...folderData.tests.premades);}
+        }
+
+        if(decoratedData.tests)
+        {
+          if(decoratedData.tests.funcs) {tests.funcs.push(...decoratedData.tests.funcs);}
+          if(decoratedData.tests.paths) {tests.paths.push(...decoratedData.tests.paths);}
+          if(decoratedData.tests.premades) {tests.premades.push(...decoratedData.tests.premades);}
+        }
+
+        const events = new Array<PostmanCollection.Event>();
+
+        if(tests.premades.length > 0)
+        {
+          for(const premade of tests.premades)
+          {
+            // TODO : Premades (should work) have not been tested
+            events.push(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+              listen: premade.listen,
+              script: new PostmanCollection.Script({
+                exec: premade.func,
+                type: "text/javascript"
+              })
+            }));
+          }
+        }
+
+        if (tests.funcs.length > 0)
+        {
+          // Function Obj
+          for(const func of tests.funcs)
+          {
+            // Currently Supported
+            events.push(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+              listen: func.listen,
+              script: new PostmanCollection.Script({
+                exec: Utilities.toEventExec(func.func),
+                type: "text/javascript"
+              })
+            }));
+          }
+        }
+
+        if(tests.paths.length > 0)
+        {
+          // TODO : Paths have not been tested
+          for(const path of tests.paths)
+          {
+            events.push(new PostmanCollection.Event(<PostmanCollection.EventDefinition>{
+              listen: path.listen,
+              script: new PostmanCollection.Script({
+                exec: await Utilities.functionFromFile(path.func),
+                type: "text/javascript"
+              })
+            }));
+          }
+        }
+
+        for(const event of events)
+        {
+          if(event.script.exec && event.script.exec.length > 1)
+          {
+            nuItemEndpoint.events.add(event);
+            continue;
+          }
+
+          if(event.script.exec && event.script.exec.length < 2)
+          {
+            if(event.script.exec[0].length > 1)
+            {
+              nuItemEndpoint.events.add(event);
+              continue;
+            }
+          }
+
+        }
+        // // // End TESTS \\ \\ \\
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+        //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// //// Query Params / Headers / Request Params
+        //// //// //// //// //// Query Params / Headers / Request Params
+
+        // Split the path up, locate an params and their indexes. Replace with new value
+        const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
+        const headers = new Array<PostmanCollection.HeaderDefinition>();
+
+        if(decoratedData.headers != null && decoratedData.headers.length > 0)
+        {
+          headers.push(...decoratedData.headers)
+        }
+
+        const splicedPath = endpoint.path.split(/[\\/]/);
+
+        if(splicedPath[0] === "")
+        {
+          splicedPath.shift();
+        }
+
+        for(let i = 0; i < splicedPath.length; i++)
+        {
+          if(splicedPath[i].startsWith(":"))
+          {
+            if(decoratedData.requestParams != null && decoratedData.requestParams.length > 0)
+            {
+              const rIndx = decoratedData.requestParams.findIndex((curObj) => curObj.index === i || curObj.index === splicedPath[i].substring(1));
+              if(rIndx >= 0)
+              {
+                // Decorator handles environment variable or not
+                splicedPath[i] = decoratedData.requestParams[rIndx].value;
+              }
+              else
+              {
+                splicedPath[i] = `{{${splicedPath[i].substring(1)}}}`
+              }
             }
             else
             {
               splicedPath[i] = `{{${splicedPath[i].substring(1)}}}`
             }
+
+          }
+        }
+
+        splicedPath.unshift(...basePath);
+
+        const paramData = controller.parameterMetadata ? controller.parameterMetadata[endpoint.key] : [];
+        for(const param of paramData.filter(p => p.type > 1))
+        {
+          switch(param.type)
+          {
+            case PARAMETER_TYPE.QUERY:
+              {
+                if(decoratedData.queryParams != null && decoratedData.queryParams[param.parameterName] != null)
+                {
+                  queryParams.push({key: param.parameterName, value: decoratedData.queryParams[param.parameterName]});
+                }
+                else
+                {
+                  queryParams.push({key: param.parameterName, value: ''})
+                }
+              }
+              break;
+
+            case PARAMETER_TYPE.HEADERS:
+              // TODO : Headers inside the decorated data should be merged
+              headers.push(<PostmanCollection.HeaderDefinition>{key: param.parameterName, value: param.parameterName});
+              break;
+
+            default:
+            break;
+          }
+        }
+
+        //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
+
+
+        //// //// //// //// //// //// //// //// //// //// //// //////// //// //// //// //// //// Host
+        //// //// //// //// //// Host
+        const host = new Array<string>();
+
+        if(options != null)
+        {
+          if(options.hostKey != null && Array.isArray(options.hostKey))
+          {
+            host.push(...options.hostKey);
           }
           else
           {
-            splicedPath[i] = `{{${splicedPath[i].substring(1)}}}`
+            host.push(`{{${options.hostKey || 'ROOT_URL'}}}`);
           }
-
-        }
-      }
-
-      splicedPath.unshift(...basePath);
-
-      const paramData = controller.parameterMetadata ? controller.parameterMetadata[endpoint.key] : [];
-      for(const param of paramData.filter(p => p.type > 1))
-      {
-        switch(param.type)
-        {
-          case PARAMETER_TYPE.QUERY:
-            {
-              if(decoratedData.queryParams != null && decoratedData.queryParams[param.parameterName] != null)
-              {
-                queryParams.push({key: param.parameterName, value: decoratedData.queryParams[param.parameterName]});
-              }
-              else
-              {
-                queryParams.push({key: param.parameterName, value: ''})
-              }
-            }
-            break;
-
-          case PARAMETER_TYPE.HEADERS:
-            // TODO : Headers inside the decorated data should be merged
-            headers.push(<PostmanCollection.HeaderDefinition>{key: param.parameterName, value: param.parameterName});
-            break;
-
-          default:
-          break;
-        }
-      }
-
-      //\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\//\\
-
-
-      //// //// //// //// //// //// //// //// //// //// //// //////// //// //// //// //// //// Host
-      //// //// //// //// //// Host
-      const host = new Array<string>();
-
-      if(options != null)
-      {
-        if(options.hostKey != null && Array.isArray(options.hostKey))
-        {
-          host.push(...options.hostKey);
         }
         else
         {
-          host.push(`{{${options.hostKey || 'ROOT_URL'}}}`);
-        }
-      }
-      else
-      {
-        host.push("{{ROOT_URL}}");
-      }
-
-      nuItemEndpoint.request.method = endpoint.method;
-      nuItemEndpoint.request.url = new PostmanCollection.Url({
-        host: host,
-        path: splicedPath,
-        query: queryParams
-      });
-
-      for(const header of headers)
-      {
-        nuItemEndpoint.request.headers.add(new PostmanCollection.Header(header));
-      }
-
-      if(decoratedData.body != null)
-      {
-        (<PostmanCollection.RequestBodyDefinition>decoratedData.body).raw = decoratedData.body.raw.type === "path" ? await textFromFile(decoratedData.body.raw.value) : decoratedData.body.raw.value;
-
-        if((<PostmanCollection.RequestBodyDefinition>decoratedData.body).raw.length > 0)
-        {
-          nuItemEndpoint.request.body = new PostmanCollection.RequestBody(decoratedData.body);
+          host.push("{{ROOT_URL}}");
         }
 
-      }
+        nuItemEndpoint.request.method = endpoint.method;
+        nuItemEndpoint.request.url = new PostmanCollection.Url({
+          host: host,
+          path: splicedPath,
+          query: queryParams
+        });
 
-      if(decoratedData.description != null)
-      {
-        const desc =  decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.value) : decoratedData.description.value
-        if(desc.length > 0)
+        for(const header of headers)
         {
-          nuItemEndpoint.request.description = desc;
+          nuItemEndpoint.request.headers.add(new PostmanCollection.Header(header));
         }
-      }
 
-      if(decoratedData.responses)
-      {
-        if(decoratedData.responses.length > 0)
+        if(decoratedData.body != null)
         {
-          // TODO splitting this into different arrays might be a good idea
-          for(const response of <Array<ResponseDefinition>>decoratedData.responses)
+          const bodyRaw = decoratedData.body.raw.type === "path" ? await textFromFile(decoratedData.body.raw.value) : decoratedData.body.raw.value;
+
+
+          const body: any = Object.assign({}, {...decoratedData.body});
+
+          body.raw = bodyRaw;
+
+          if(bodyRaw.length > 0)
           {
-            if(typeof(response) === "string")
-            {
-                continue;
-            }
-            if(response.originalRequest == null)
-            {
-              response.originalRequest = nuItemEndpoint.request.toJSON();
-            }
-
-            (<PostmanCollection.ResponseDefinition>response).body = response.body.type === "path" ? await textFromFile(response.body.value) : response.body.value;
-
-
-            nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
+            nuItemEndpoint.request.body = new PostmanCollection.RequestBody(body);
           }
 
-          for(const respPath of <Array<string>>decoratedData.responses)
+        }
+
+        if(decoratedData.description != null)
+        {
+          const desc =  decoratedData.description.type === "path" ? await textFromFile(decoratedData.description.value) : decoratedData.description.value
+          if(desc.length > 0)
           {
+            nuItemEndpoint.request.description = desc;
+          }
+        }
 
-            if(typeof(respPath) !== "string")
+        if(decoratedData.responses)
+        {
+          if(decoratedData.responses.length > 0)
+          {
+            // TODO splitting this into different arrays might be a good idea
+            for(const response of <Array<ResponseDefinition>>decoratedData.responses)
             {
-                continue;
-            }
-            try {
-              const txtFrmFile = await textFromFile(respPath);
-              if(txtFrmFile.length <= 0)
+              if(typeof(response) === "string")
               {
-                continue;
+                  continue;
               }
-              const response = <PostmanCollection.ResponseDefinition>JSON.parse(txtFrmFile);
-
               if(response.originalRequest == null)
               {
                 response.originalRequest = nuItemEndpoint.request.toJSON();
               }
+              (<PostmanCollection.ResponseDefinition>response).body = response.body.type === "path" ? await textFromFile(response.body.value) : response.body.value;
 
-              if(typeof (response.body) !== "string")
-              {
-                response.body = JSON.stringify(response.body, null, 2);
-              }
 
               nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
-            } catch (error) {
-              console.error('Error while parsing data from response path', respPath);
             }
 
+            for(const respPath of <Array<string>>decoratedData.responses)
+            {
+
+              if(typeof(respPath) !== "string")
+              {
+                  continue;
+              }
+              try {
+                const txtFrmFile = await textFromFile(respPath);
+                if(txtFrmFile.length <= 0)
+                {
+                  continue;
+                }
+                const response = <PostmanCollection.ResponseDefinition>JSON.parse(txtFrmFile);
+
+                if(response.originalRequest == null)
+                {
+                  response.originalRequest = nuItemEndpoint.request.toJSON();
+                }
+
+                if(typeof (response.body) !== "string")
+                {
+                  response.body = JSON.stringify(response.body, null, 2);
+                }
+
+                nuItemEndpoint.responses.add(new PostmanCollection.Response(response));
+              } catch (error) {
+                console.error('Error while parsing data from response path', respPath);
+              }
+
+            }
           }
         }
+
+
+        map.set(nuItemEndpoint.name, nuItemEndpoint);
       }
 
-
-      return nuItemEndpoint;
-    }));
+      return Array.from(map.values());
+    }
 
     const iname = folderData.name || tname;
     let description = "";
