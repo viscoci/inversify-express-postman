@@ -1,7 +1,7 @@
 import { ResponseDefinition } from '../interfaces';
-import { Metadata, setupMetadata } from '../index';
+import { Metadata, setupMetadata, setupMetaVariant } from '../index';
 
-export function PostmanResponse(responseDefinition: ResponseDefinition | string): (target: any, key: string, value: any) => void
+export function PostmanResponse(responseDefinition: ResponseDefinition | string, variantKey?: string): (target: any, key: string, value: any) => void
 {
     const extended = function (target: any, key: string, value: any): void
     {
@@ -13,12 +13,28 @@ export function PostmanResponse(responseDefinition: ResponseDefinition | string)
 
         const targetName = setupMetadata(target, key);
 
-        if(Metadata.folders[targetName].controllers[key].responses == null)
+        if(variantKey != null)
         {
-            Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition | string>();
+            setupMetaVariant(targetName, key, variantKey);
+
+            if(Metadata.folders[targetName].controllers[key].variations[variantKey].responses == null)
+            {
+                Metadata.folders[targetName].controllers[key].variations[variantKey].responses = new Array<ResponseDefinition | string>();
+            }
+
+            Metadata.folders[targetName].controllers[key].variations[variantKey].responses.push(responseDefinition);
+        }
+        else
+        {
+
+            if(Metadata.folders[targetName].controllers[key].responses == null)
+            {
+                Metadata.folders[targetName].controllers[key].responses = new Array<ResponseDefinition | string>();
+            }
+
+            Metadata.folders[targetName].controllers[key].responses.push(responseDefinition);
         }
 
-        Metadata.folders[targetName].controllers[key].responses.push(responseDefinition);
 
     }
 

@@ -72,6 +72,19 @@ export function setupMetadata(target: any, keyName?: string)
 
 }
 
+export function setupMetaVariant(targetName: any, key: string, variantKey: string)
+{
+    if(Metadata.folders[targetName].controllers[key].variations == null)
+    {
+        Metadata.folders[targetName].controllers[key].variations = {};
+    }
+
+    if(Metadata.folders[targetName].controllers[key].variations[variantKey] == null)
+    {
+        Metadata.folders[targetName].controllers[key].variations[variantKey] = {};
+    }
+}
+
 /*
 Goals:
  - Take Express Inversify API and export it to Postman Collection

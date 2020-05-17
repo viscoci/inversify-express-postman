@@ -1,5 +1,6 @@
 import { Metadata, setupMetadata } from '..';
 import { Extension } from '../interfaces';
+import { setupMetaVariant } from '../index';
 
 /**
  * Set a query parameter to have its value accept an environment variable which is set by the @param paramValue
@@ -7,7 +8,7 @@ import { Extension } from '../interfaces';
  * @param paramValue Value the parameter should equal
  * @param envVariable If the value should be wrapped as an environment variable
  */
-export function PostmanQueryParam(paramName: string, paramValue: string, envVariable = true): (target: any, key: string, value: any) => void
+export function PostmanQueryParam(paramName: string, paramValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -19,15 +20,26 @@ export function PostmanQueryParam(paramName: string, paramValue: string, envVari
             return;
         }
 
-
-
-        if(Metadata.folders[targetName].controllers[key].queryParams == null)
+        if(variantKey != null)
         {
-            Metadata.folders[targetName].controllers[key].queryParams = {};
+            setupMetaVariant(targetName, key, variantKey);
+
+            if(Metadata.folders[targetName].controllers[key].variations[variantKey].queryParams == null)
+            {
+                Metadata.folders[targetName].controllers[key].variations[variantKey].queryParams = {};
+            }
+
+            Metadata.folders[targetName].controllers[key].variations[variantKey].queryParams[paramName] = envVariable ? `{{${paramValue}}}` : paramValue;
         }
+        else
+        {
+            if(Metadata.folders[targetName].controllers[key].queryParams == null)
+            {
+                Metadata.folders[targetName].controllers[key].queryParams = {};
+            }
 
-
-        Metadata.folders[targetName].controllers[key].queryParams[paramName] = envVariable ? `{{${paramValue}}}` : paramValue;
+            Metadata.folders[targetName].controllers[key].queryParams[paramName] = envVariable ? `{{${paramValue}}}` : paramValue;
+        }
     }
 
     return extended;

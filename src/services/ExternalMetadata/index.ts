@@ -4,7 +4,7 @@ import path = require('path');
 import { textFromFile } from '../../utils';
 import { CollectionHandler } from '../../index';
 import { Metadata, PostmanEventTest, ExternalMetadata } from '../../interfaces';
-import { ResponseDefinition } from '../../interfaces/DecoratorData';
+import { ResponseDefinition, DecoratorData, DecoratorVariation } from '../../interfaces/DecoratorData';
 import { interfaces } from 'inversify-express-utils';
 
 
@@ -235,6 +235,79 @@ export class ExternalMetadataHandler
         }
     }
 
+    AssignData(ddata: DecoratorData | DecoratorVariation, Files: FileTypings<string>)
+        {
+            for(const key in Files)
+            {
+                switch(<FileTypes>key)
+                {
+                    case "tests":
+                    {
+                        if(ddata.tests == null)
+                        {
+                            ddata.tests = {};
+                        }
+
+                        if(ddata.tests.paths == null)
+                        {
+                            ddata.tests.paths = new Array<PostmanEventTest<string>>();
+                        }
+
+                        ddata.tests.paths.push({listen: "test", func: Files[key]});
+                        break;
+                    }
+
+                    case "pretests":
+                    {
+                        if(ddata.tests == null)
+                        {
+                            ddata.tests = {};
+                        }
+
+                        if(ddata.tests.paths == null)
+                        {
+                            ddata.tests.paths = new Array<PostmanEventTest<string>>();
+                        }
+
+                        ddata.tests.paths.push({listen: "prerequest", func: Files[key]});
+                        break;
+                    }
+
+                    case "description":
+                    {
+                        if(!this.override  && ddata.description != null) {break;}
+
+                        ddata.description = {type: "path", value: Files[key]}
+                        break;
+                    }
+
+                    case "requestbody":
+                    {
+                        if(!this.override && ddata.body != null)
+                        {
+                            break;
+                        }
+                        ddata.body =  {mode: "raw", raw: {value: Files[key], type: "path"}};
+                        break;
+                    }
+
+                    case "examples":
+                    {
+
+                        if(ddata.responses == null)
+                        {
+                            ddata.responses = new Array<string | ResponseDefinition>();
+                        }
+
+                        ddata.responses.push(Files[key]);
+                        break;
+                    }
+                }
+            }
+
+            return ddata;
+        }
+
     ProcessEndpointMetaData(metadata: Metadata, decordata: CollectionHandler, endpoint: interfaces.ControllerMethodMetadata)
     {
         const tname = metadata.controllerMetadata.target.name;
@@ -254,72 +327,19 @@ export class ExternalMetadataHandler
             return;
         }
 
-        for(const key in Files)
+        decordata.folders[tname].controllers[eKey] = this.AssignData(decordata.folders[tname].controllers[eKey], Files);
+
+        if(decordata.folders[tname].controllers[eKey].variations == null)
         {
-            switch(<FileTypes>key)
-            {
-                case "tests":
-                {
-                    if(decordata.folders[tname].controllers[eKey].tests == null)
-                    {
-                        decordata.folders[tname].controllers[eKey].tests = {};
-                    }
+            return;
+        }
 
-                    if(decordata.folders[tname].controllers[eKey].tests.paths == null)
-                    {
-                        decordata.folders[tname].controllers[eKey].tests.paths = new Array<PostmanEventTest<string>>();
-                    }
+        for(const vKey in decordata.folders[tname].controllers[eKey].variations)
+        {
+            const ddata = decordata.folders[tname].controllers[eKey].variations[vKey];
+            const variantFiles = this.ReadMetadata(path.join(basePath, `${endpoint.path}_${vKey}`), false);
 
-                    decordata.folders[tname].controllers[eKey].tests.paths.push({listen: "test", func: Files[key]});
-                    break;
-                }
-
-                case "pretests":
-                {
-                    if(decordata.folders[tname].controllers[eKey].tests == null)
-                    {
-                        decordata.folders[tname].controllers[eKey].tests = {};
-                    }
-
-                    if(decordata.folders[tname].controllers[eKey].tests.paths == null)
-                    {
-                        decordata.folders[tname].controllers[eKey].tests.paths = new Array<PostmanEventTest<string>>();
-                    }
-
-                    decordata.folders[tname].controllers[eKey].tests.paths.push({listen: "prerequest", func: Files[key]});
-                    break;
-                }
-
-                case "description":
-                {
-                    if(!this.override  && decordata.folders[tname].controllers[eKey].description != null) {break;}
-
-                    decordata.folders[tname].controllers[eKey].description = {type: "path", value: Files[key]}
-                    break;
-                }
-
-                case "requestbody":
-                {
-                    if(!this.override && decordata.folders[tname].controllers[eKey].body != null)
-                    {
-                        break;
-                    }
-                    decordata.folders[tname].controllers[eKey].body =  {mode: "raw", raw: {value: Files[key], type: "path"}};
-                    break;
-                }
-
-                case "examples":
-                {
-
-                    if(decordata.folders[tname].controllers[eKey].responses == null)
-                    {
-                        decordata.folders[tname].controllers[eKey].responses = new Array<string | ResponseDefinition>();
-                    }
-
-                    decordata.folders[tname].controllers[eKey].responses.push(Files[key]);
-                    break;
-                }
-            }
+            decordata.folders[tname].controllers[eKey].variations[vKey] = this.AssignData(ddata, variantFiles);
         }
     }
 

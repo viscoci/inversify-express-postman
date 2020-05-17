@@ -1,6 +1,7 @@
 import { Extension } from '../interfaces';
 import { Metadata, setupMetadata } from '..';
 import { HeaderDefinition, Header } from 'postman-collection';
+import { setupMetaVariant } from '../index';
 
 /**
  * Adds a header
@@ -8,7 +9,7 @@ import { HeaderDefinition, Header } from 'postman-collection';
  * @param headerValue
  * @param envVariable If the value should be wrapped as an environment variable
  */
-export function PostmanHeader(headerKey: string, headerValue: string, envVariable = true): (target: any, key: string, value: any) => void
+export function PostmanHeader(headerKey: string, headerValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -20,14 +21,32 @@ export function PostmanHeader(headerKey: string, headerValue: string, envVariabl
             return;
         }
 
-
-
-        if(Metadata.folders[targetName].controllers[key].headers == null)
+        if(variantKey != null)
         {
-            Metadata.folders[targetName].controllers[key].headers = new Array<HeaderDefinition>();
-        }
+            setupMetaVariant(targetName, key, variantKey);
+            if(Metadata.folders[targetName].controllers[key].variations[variantKey].headers == null)
+            {
+                Metadata.folders[targetName].controllers[key].variations[variantKey].headers = new Array<HeaderDefinition>();
+            }
 
-        Metadata.folders[targetName].controllers[key].headers.push(<HeaderDefinition>{key: headerKey, value:  envVariable ? `{{${headerValue}}}` : headerValue})
+            Metadata.folders[targetName].controllers[key].variations[variantKey].headers.push(<HeaderDefinition>{
+                key: headerKey,
+                value: envVariable ? `{{${headerValue}}}` : headerValue
+            });
+        }
+        else
+        {
+
+            if(Metadata.folders[targetName].controllers[key].headers == null)
+            {
+                Metadata.folders[targetName].controllers[key].headers = new Array<HeaderDefinition>();
+            }
+
+            Metadata.folders[targetName].controllers[key].headers.push(<HeaderDefinition>{
+                key: headerKey,
+                value:  envVariable ? `{{${headerValue}}}` : headerValue
+            });
+        }
     }
 
     return extended;
