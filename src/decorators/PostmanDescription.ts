@@ -1,7 +1,7 @@
-import { Metadata, setupMetadata } from '..';
+import { Metadata, setupMetadata, setupMetaVariant } from '..';
 import { Extension } from '../interfaces';
 
-export function PostmanDescription(description: string, type: "path" | "text" = "text"): Extension
+export function PostmanDescription(description: string, type: "path" | "text" = "text", variantKey?: string): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -18,7 +18,17 @@ export function PostmanDescription(description: string, type: "path" | "text" = 
             Metadata.folders[targetName].controllers[key] = {};
         }
 
-        Metadata.folders[targetName].controllers[key].description = {value: description, type: type};
+        if(variantKey != null)
+        {
+            setupMetaVariant(targetName, key, variantKey);
+            Metadata.folders[targetName].controllers[key].variations[variantKey].description =  {value: description, type: type};
+        }
+        else
+        {
+            Metadata.folders[targetName].controllers[key].description = {value: description, type: type};
+        }
+
+
     }
 
     return extended;

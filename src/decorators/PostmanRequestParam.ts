@@ -1,5 +1,6 @@
 import { Metadata, setupMetadata } from '..';
 import { Extension } from '../interfaces';
+import { setupMetaVariant } from '../index';
 
 
 /**
@@ -8,7 +9,7 @@ import { Extension } from '../interfaces';
  * @param paramValue The new value to set
  * @param envVariable Whether to wrap the new value as an Environment variable
  */
-export function PostmanRequestParam(keyIndex: number | string, paramValue: string, envVariable = true): (target: any, key: string, value: any) => void
+export function PostmanRequestParam(keyIndex: number | string, paramValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -20,15 +21,27 @@ export function PostmanRequestParam(keyIndex: number | string, paramValue: strin
             return;
         }
 
-
-
-        if(Metadata.folders[targetName].controllers[key].requestParams == null)
+        if(variantKey != null)
         {
-            Metadata.folders[targetName].controllers[key].requestParams = new Array<{value: string; index: string | number}>();
+            setupMetaVariant(targetName, key, variantKey);
+
+            if(Metadata.folders[targetName].controllers[key].variations[variantKey].requestParams == null)
+            {
+                Metadata.folders[targetName].controllers[key].variations[variantKey].requestParams = new Array<{value: string; index: string | number}>();
+            }
+
+            Metadata.folders[targetName].controllers[key].variations[variantKey].requestParams.push({index: keyIndex, value: envVariable ? `{{${paramValue}}}` : paramValue});
         }
+        else
+        {
+            if(Metadata.folders[targetName].controllers[key].requestParams == null)
+            {
+                Metadata.folders[targetName].controllers[key].requestParams = new Array<{value: string; index: string | number}>();
+            }
 
 
-        Metadata.folders[targetName].controllers[key].requestParams.push({index: keyIndex, value: envVariable ? `{{${paramValue}}}` : paramValue});
+            Metadata.folders[targetName].controllers[key].requestParams.push({index: keyIndex, value: envVariable ? `{{${paramValue}}}` : paramValue});
+        }
     }
 
     return extended;

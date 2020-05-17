@@ -11,6 +11,8 @@ export type Extension = (target: any, key?: string, value?: any) => void;
  * Extra information relevant to an endpoint
  */
 
+
+
 export type ResponseDefinition = Omit<PostmanCollection.ResponseDefinition, 'body'> & {body: {value: string; type: "path" | "text"}}
 export type RequestBodyDefinition = Omit<PostmanCollection.RequestBodyDefinition, 'raw'> & {raw: {value: string; type: "path" | "text"}}
 export type DecoratorData =
@@ -24,5 +26,7 @@ export type DecoratorData =
   tests?: PostmanTest;
   responses?: Array<PostmanCollection.ResponseDefinition | string>;
   parent?: string;
-
+  variations?: {[variantKey: string]: DecoratorVariation};
 }
+
+export type DecoratorVariation = Omit<DecoratorData, "parent" | "variations">

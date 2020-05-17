@@ -1,5 +1,6 @@
 import { Metadata, setupMetadata } from '..';
 import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, PostmanFuncTest, Extension } from '../interfaces'
+import { setupMetaVariant } from '../index';
 
 
 /**
@@ -8,20 +9,28 @@ import {PostmanTest, PostmanEventListen, PostmanPathTest, PostmanPremadeTest, Po
  * @param test {any} An object (presumably a function) to include as a postman test script
  * @param params {any[]} An params to include with
  */
-export function PostmanTests({paths, funcs, premades}: PostmanTest): Extension
+export function PostmanTests({paths, funcs, premades}: PostmanTest, variantKey?: string): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
     {
         const targetName = setupMetadata(target, key);
+
         if(key == null)
         {
             Metadata.folders[targetName].folder.tests = {paths, funcs, premades};
             return;
         }
 
-        Metadata.folders[targetName].controllers[key].tests = {paths, funcs, premades};
-
+        if(variantKey != null)
+        {
+            setupMetaVariant(targetName, key, variantKey);
+            Metadata.folders[targetName].controllers[key].variations[variantKey].tests = {paths, funcs, premades};
+        }
+        else
+        {
+            Metadata.folders[targetName].controllers[key].tests = {paths, funcs, premades};
+        }
     }
 
     return extended;
@@ -33,7 +42,7 @@ export function PostmanTests({paths, funcs, premades}: PostmanTest): Extension
  * @param func {Function} Javascript safe function in which the wrapped code will be taken from. Name must start with either
  * @param listen {PostmanEventListen} When the test script should be called (usually is either `test` or `prerequest`)
  */
-export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[]): Extension
+export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[], variantKey?: string): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -78,39 +87,83 @@ export function PostmanTestFunction(listen: PostmanEventListen, func: Function |
             return;
         }
 
-        if(Metadata.folders[targetName].controllers[key].tests == null)
+        if(variantKey != null)
         {
-            Metadata.folders[targetName].controllers[key].tests = {};
-        }
+            setupMetaVariant(targetName, key, variantKey);
 
-        if(typeof(func) === "string")
-        {
-            if(Metadata.folders[targetName].controllers[key].tests.paths == null)
+            if(Metadata.folders[targetName].controllers[key].variations[variantKey].tests == null)
             {
-                Metadata.folders[targetName].controllers[key].tests.paths = new Array<PostmanPathTest>();
+                Metadata.folders[targetName].controllers[key].variations[variantKey].tests = {};
             }
 
-            Metadata.folders[targetName].controllers[key].tests.paths.push({func, listen});
+            if(typeof(func) === "string")
+            {
+                if(Metadata.folders[targetName].controllers[key].variations[variantKey].tests.paths == null)
+                {
+                    Metadata.folders[targetName].controllers[key].variations[variantKey].tests.paths = new Array<PostmanPathTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].variations[variantKey].tests.paths.push({func, listen});
+            }
+            else if (Array.isArray(func))
+            {
+                if(Metadata.folders[targetName].controllers[key].variations[variantKey].tests.premades == null)
+                {
+                    Metadata.folders[targetName].controllers[key].variations[variantKey].tests.premades = new Array<PostmanPremadeTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].variations[variantKey].tests.premades.push({func, listen});
+            }
+
+            else {
+
+                if(Metadata.folders[targetName].controllers[key].variations[variantKey].tests.funcs == null)
+                {
+                    Metadata.folders[targetName].controllers[key].variations[variantKey].tests.funcs = new Array<PostmanFuncTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].variations[variantKey].tests.funcs.push({func, listen});
+            }
+
         }
-        else if (Array.isArray(func))
+        else
         {
-            if(Metadata.folders[targetName].controllers[key].tests.premades == null)
+            if(Metadata.folders[targetName].controllers[key].tests == null)
             {
-                Metadata.folders[targetName].controllers[key].tests.premades = new Array<PostmanPremadeTest>();
+                Metadata.folders[targetName].controllers[key].tests = {};
             }
 
-            Metadata.folders[targetName].controllers[key].tests.premades.push({func, listen});
-        }
-
-        else {
-
-            if(Metadata.folders[targetName].controllers[key].tests.funcs == null)
+            if(typeof(func) === "string")
             {
-                Metadata.folders[targetName].controllers[key].tests.funcs = new Array<PostmanFuncTest>();
+                if(Metadata.folders[targetName].controllers[key].tests.paths == null)
+                {
+                    Metadata.folders[targetName].controllers[key].tests.paths = new Array<PostmanPathTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].tests.paths.push({func, listen});
+            }
+            else if (Array.isArray(func))
+            {
+                if(Metadata.folders[targetName].controllers[key].tests.premades == null)
+                {
+                    Metadata.folders[targetName].controllers[key].tests.premades = new Array<PostmanPremadeTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].tests.premades.push({func, listen});
             }
 
-            Metadata.folders[targetName].controllers[key].tests.funcs.push({func, listen});
+            else {
+
+                if(Metadata.folders[targetName].controllers[key].tests.funcs == null)
+                {
+                    Metadata.folders[targetName].controllers[key].tests.funcs = new Array<PostmanFuncTest>();
+                }
+
+                Metadata.folders[targetName].controllers[key].tests.funcs.push({func, listen});
+            }
         }
+
+
     }
 
     return extended;
