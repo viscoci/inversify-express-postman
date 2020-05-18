@@ -289,6 +289,7 @@ async function GenerateNewItemEndopint(controller: Metadata,
         {
             for(const ogHeader of originalItem.request.headers.all())
             {
+                originalItem.request.headers.add(ogHeader);
                 nuItemEndpoint.request.headers.add(ogHeader);
             }
         }
@@ -307,6 +308,7 @@ async function GenerateNewItemEndopint(controller: Metadata,
         {
             for(const ogResp of originalItem.responses.all())
             {
+                originalItem.responses.add(ogResp);
                 nuItemEndpoint.responses.add(ogResp);
             }
         }
@@ -372,7 +374,6 @@ const getItemDefinitions = async (controller: Metadata, extmetaHandler: External
 
         for(const vKey in decoratedData.variations)
         {
-            console.log(`Found Variation`,  JSON.stringify(decoratedData.variations[vKey], null, 2))
             for(const pKey in decoratedData.variations[vKey])
             {
                 if(decoratedData.variations[vKey][pKey] == null)
@@ -383,7 +384,6 @@ const getItemDefinitions = async (controller: Metadata, extmetaHandler: External
                 }
             }
 
-            console.log(`Matched Variation`, JSON.stringify(decoratedData.variations[vKey], null, 2))
             let vName = decoratedData.variations[vKey].name || vKey;
 
             if (map.get(vName) != null) {
