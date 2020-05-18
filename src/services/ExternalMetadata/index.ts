@@ -91,7 +91,6 @@ export class ExternalMetadataHandler
         for(const key in this.filetypes)
         {
             paths[key] = (this.FilePathBuilder(subroute, <FileTypes>key));
-            console.log(`paths[${key}]`, paths[key]);
         }
 
         return paths;
@@ -313,11 +312,7 @@ export class ExternalMetadataHandler
         const tname = metadata.controllerMetadata.target.name;
         const basePath = metadata.controllerMetadata.path;
 
-
-        // console.log(`basePath==${basePath}`);
-        // console.log(`endpoint==${endpoint.path}`);
         const jointPath = path.join(basePath, endpoint.path);
-        //console.log(`conjoine==${jointPath}`);
         const Files = this.ReadMetadata(jointPath, false);
 
         const eKey = endpoint.key;
