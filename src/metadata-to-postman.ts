@@ -275,44 +275,54 @@ async function GenerateNewItemEndopint(controller: Metadata,
         }
     }
 
-    if(originalItem != null)
-    {
-        if(nuItemEndpoint.events.count() <= 0)
+    try {
+        if(originalItem != null)
         {
-            for(const ogEvent of originalItem.events.all())
+            console.log(`Checking Tests for ${nuItemEndpoint.name}`);
+            if(nuItemEndpoint.events.count() <= 0)
             {
-                nuItemEndpoint.events.add(ogEvent);
+                console.log(`Copying Tests`);
+                for(const ogEvent of originalItem.events.all())
+                {
+                    nuItemEndpoint.events.add(ogEvent);
+                }
+            }
+
+            console.log(`Checking Headers for ${nuItemEndpoint.name}`);
+
+            if(nuItemEndpoint.request.headers.count() <= 0)
+            {
+                for(const ogHeader of originalItem.request.headers.all())
+                {
+                    nuItemEndpoint.request.headers.add(ogHeader);
+                }
+            }
+
+            if(nuItemEndpoint.request.body == null)
+            {
+                nuItemEndpoint.request.body = originalItem.request.body;
+            }
+
+            if(nuItemEndpoint.request.description == null)
+            {
+                nuItemEndpoint.request.description = originalItem.request.description;
+            }
+
+            console.log(`Checking Responses for ${nuItemEndpoint.name}`);
+
+            if(nuItemEndpoint.responses.count() <= 0)
+            {
+                for(const ogResp of originalItem.responses.all())
+                {
+                    nuItemEndpoint.responses.add(ogResp);
+                }
             }
         }
-
-        if(nuItemEndpoint.request.headers.count() <= 0)
-        {
-            for(const ogHeader of originalItem.request.headers.all())
-            {
-                originalItem.request.headers.add(ogHeader);
-                nuItemEndpoint.request.headers.add(ogHeader);
-            }
-        }
-
-        if(nuItemEndpoint.request.body == null)
-        {
-            nuItemEndpoint.request.body = originalItem.request.body;
-        }
-
-        if(nuItemEndpoint.request.description == null)
-        {
-            nuItemEndpoint.request.description = originalItem.request.description;
-        }
-
-        if(nuItemEndpoint.responses.count() <= 0)
-        {
-            for(const ogResp of originalItem.responses.all())
-            {
-                originalItem.responses.add(ogResp);
-                nuItemEndpoint.responses.add(ogResp);
-            }
-        }
+    } catch (error) {
+        console.log(`Unknown Error`, error);
     }
+
+
 
     return nuItemEndpoint;
 }
@@ -322,13 +332,71 @@ const getItemDefinitions = async (controller: Metadata, extmetaHandler: External
     const folderData = decoratorData.folders[tname].folder || {};
     const map = new Map<string, PostmanCollection.Item>();
 
+    const existsMap = new Map<string, {endpoint: interfaces.ControllerMethodMetadata; methods: Array<string>; created: boolean}>();
 
 
+    /// Any endpoints that have the same key will have the methods as variations with a key of the method type in all capitals
+    for(const endpoint of controller.methodMetadata)
+    {
+        let exists = existsMap.get(endpoint.key);
+        if(exists == null)
+        {
+            exists = {endpoint, methods: new Array<string>(), created: false};
+        }
+
+        exists.methods.push(endpoint.method.toUpperCase());
+        existsMap.set(endpoint.key, exists);
+    }
+
+    // Now that every method has been accounted for, start creating the endpoints
     for (const endpoint of controller.methodMetadata) {
+
+        const exists = existsMap.get(endpoint.key);
+        if(exists == null)
+        {
+            console.warn(`Somehow the endpoint key is null?`);
+            continue;
+        }
+
+        if(exists.methods.length > 1)
+        {
+            if(exists.created)
+            {
+                console.log(`Variation already created for endpoint`, endpoint.key)
+                continue;
+            }
+
+            const decorData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
+
+            for(const method of exists.methods)
+            {
+                if(decorData.variations == null)
+                {
+                    decorData.variations = {};
+                }
+
+                // Make sure the variation exists
+                if(decorData.variations[method] == null)
+                {
+                    decorData.variations[method] = {}
+                }
+
+                if(decorData.variations[method].name == null)
+                {
+                    decorData.variations[method].name = decorData.name || endpoint.key;
+                }
+
+                decorData.variations[method].name += " " + method;
+            }
+
+            decoratorData.folders[tname].controllers[endpoint.key] = decorData;
+        }
+
+        exists.created = true;
+        existsMap.set(endpoint.key, exists);
 
         if (extmetaHandler != null) {
             if (decoratorData.folders[tname].controllers != null) {
-                const name = endpoint.key;
 
                 if (decoratorData.folders[tname].controllers[endpoint.key] != null) {
                     if (map.get(decoratorData.folders[tname].controllers[endpoint.key].name || endpoint.key) == null) {
@@ -349,62 +417,80 @@ const getItemDefinitions = async (controller: Metadata, extmetaHandler: External
 
         const decoratedData: DecoratorData = decoratorData.folders[tname].controllers[endpoint.key] || {};
 
-        let epName = decoratedData.name || endpoint.key;
-
-        if (map.get(epName) != null) {
-            // If an endpoint has already been made with this name. Rename it to include the request Method at the beginning of the name
-            const firstItem = map.get(epName);
-
-
-            firstItem.name = `[${firstItem.request.method.toUpperCase()}] ${firstItem.name}`;
-
-            map.set(firstItem.name, firstItem);
-            map.delete(epName);
-
-            epName = `[${endpoint.method.toUpperCase()}] ${epName}`;
-        }
+        const epName = decoratedData.name || endpoint.key;
 
         const nuItemEndpoint = await GenerateNewItemEndopint(controller, folderData, decoratedData, endpoint, epName, basePath, options);
 
-        map.set(nuItemEndpoint.name, nuItemEndpoint);
-
         if (decoratedData.variations == null) {
+            // If there are no variations, then set the endpoint up
+            map.set(nuItemEndpoint.name, nuItemEndpoint);
             continue;
         }
 
+        // If the variants are all various methods of the same endpoint, delete the original and keep the variants (prevents unwanted duplicates)
+        let hasNonMethodVariant = false;
+
         for(const vKey in decoratedData.variations)
         {
-            for(const pKey in decoratedData.variations[vKey])
+            for(const pKey in decoratedData)
             {
+                switch(<keyof DecoratorData> pKey)
+                {
+                    case "parent":
+                    case "variations":
+                        continue;
+                    default:
+                        break;
+                }
                 if(decoratedData.variations[vKey][pKey] == null)
                 {
                     // For any properties undefined in the variation, set the variation to have the same values as the original
                     decoratedData.variations[vKey][pKey] = decoratedData[pKey];
-
                 }
             }
 
-            let vName = decoratedData.variations[vKey].name || vKey;
+            const vName = decoratedData.variations[vKey].name || vKey;
+            const endpointClone = Object.assign({}, {...endpoint});
 
-            if (map.get(vName) != null) {
-                // If an endpoint has already been made with this name. Rename it to include the request Method at the beginning of the name
-                const firstItem = map.get(vName);
-
-
-                firstItem.name = `[${firstItem.request.method.toUpperCase()}] ${firstItem.name}`;
-
-                map.set(firstItem.name, firstItem);
-                map.delete(vName);
-
-                vName = `[${endpoint.method.toUpperCase()}] ${vName}`;
+            switch(vKey)
+            {
+                case "GET":
+                case "POST":
+                case "PUT":
+                case "PATCH":
+                case "DELETE":
+                case "COPY":
+                case "HEAD":
+                case "OPTIONS":
+                case "LINK":
+                case "UNLINK":
+                case "PURGE":
+                case "LOCK":
+                case "UNLOCK":
+                case "PROPFIND":
+                case "VIEW":
+                    console.log(`Variant as other method ${vKey} for ${endpoint.key}`);
+                    endpointClone.method = vKey;
+                    break;
+                default:
+                    hasNonMethodVariant = true;
+                    break;
             }
 
-            const nuItemEndpointVariant = await GenerateNewItemEndopint(controller, folderData, decoratedData.variations[vKey], endpoint, vName, basePath, options, nuItemEndpoint);
+            const originalItem = nuItemEndpoint.toJSON();
+
+            const originalItemClone = new PostmanCollection.Item(originalItem)
+
+            const nuItemEndpointVariant = await GenerateNewItemEndopint(controller, folderData, decoratedData.variations[vKey], endpointClone, vName, basePath, options, originalItemClone);
+
 
             map.set(nuItemEndpointVariant.name, nuItemEndpointVariant);
         }
 
-
+        if(hasNonMethodVariant)
+        {
+            map.set(nuItemEndpoint.name, nuItemEndpoint);
+        }
     }
 
     return Array.from(map.values());
