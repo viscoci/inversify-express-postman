@@ -278,17 +278,13 @@ async function GenerateNewItemEndopint(controller: Metadata,
     try {
         if(originalItem != null)
         {
-            console.log(`Checking Tests for ${nuItemEndpoint.name}`);
             if(nuItemEndpoint.events.count() <= 0)
             {
-                console.log(`Copying Tests`);
                 for(const ogEvent of originalItem.events.all())
                 {
                     nuItemEndpoint.events.add(ogEvent);
                 }
             }
-
-            console.log(`Checking Headers for ${nuItemEndpoint.name}`);
 
             if(nuItemEndpoint.request.headers.count() <= 0)
             {
@@ -307,8 +303,6 @@ async function GenerateNewItemEndopint(controller: Metadata,
             {
                 nuItemEndpoint.request.description = originalItem.request.description;
             }
-
-            console.log(`Checking Responses for ${nuItemEndpoint.name}`);
 
             if(nuItemEndpoint.responses.count() <= 0)
             {
