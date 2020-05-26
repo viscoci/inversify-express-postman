@@ -124,9 +124,7 @@ async function GenerateNewItemEndopint(controller: Metadata,
     const queryParams = new Array<PostmanCollection.QueryParamDefinition>();
     const headers = new Array<PostmanCollection.HeaderDefinition>();
 
-    if (decoratedData.headers != null && decoratedData.headers.length > 0) {
-        headers.push(...decoratedData.headers)
-    }
+
 
     const splicedPath = endpoint.path.split(/[\\/]/);
 
@@ -204,6 +202,23 @@ async function GenerateNewItemEndopint(controller: Metadata,
         path: splicedPath,
         query: queryParams
     });
+
+
+    if (decoratedData.headers != null && decoratedData.headers.length > 0) {
+
+        for(const cuhead of decoratedData.headers)
+        {
+            const index = headers.findIndex((val) => val.key === cuhead.key)
+            if(index >= 0)
+            {
+                headers[index] = Object.assign(headers[index], cuhead);
+            }
+            else
+            {
+                headers.push(cuhead);
+            }
+        }
+    }
 
     for (const header of headers) {
         nuItemEndpoint.request.headers.add(new PostmanCollection.Header(header));
