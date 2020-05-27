@@ -4,7 +4,7 @@ import { Extension } from '../interfaces';
 /**
  * Override the name of the folder group or
  */
-export function PostmanName(Name: string, variantKey?: string): Extension
+export function PostmanName<VariantKey extends string>(Name: string, variantKey?: VariantKey): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

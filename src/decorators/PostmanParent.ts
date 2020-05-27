@@ -5,7 +5,7 @@ import { setupMetadata } from '../index';
 /**
  * Set the group parent
  */
-export function PostmanParent(parent: string): (target: any) => void
+export function PostmanParent<Parent extends string>(parent: Parent): (target: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

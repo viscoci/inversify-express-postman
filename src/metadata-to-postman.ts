@@ -529,6 +529,25 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
             basePath.shift();
         }
 
+        for (let i = 0; i < basePath.length; i++) {
+            if (basePath[i].startsWith(":")) {
+                if (folderData.requestParams != null && folderData.requestParams.length > 0) {
+                    const rIndx = folderData.requestParams.findIndex((curObj) => curObj.index === i || curObj.index === basePath[i].substring(1));
+                    if (rIndx >= 0) {
+                        // Decorator handles environment variable or not
+                        basePath[i] = folderData.requestParams[rIndx].value;
+                    }
+                    else {
+                        basePath[i] = `{{${folderData[i].substring(1)}}}`
+                    }
+                }
+                else {
+                    basePath[i] = `{{${folderData[i].substring(1)}}}`
+                }
+
+            }
+        }
+
         const iname = folderData.name || tname;
         let description = "";
         if (folderData.description) {

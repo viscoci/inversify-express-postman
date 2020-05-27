@@ -1,7 +1,7 @@
 import { Metadata, setupMetadata, setupMetaVariant } from '..';
 import { Extension } from '../interfaces';
 
-export function PostmanDescription(description: string, type: "path" | "text" = "text", variantKey?: string): Extension
+export function PostmanDescription<VariantKey extends string>(description: string, type: "path" | "text" = "text", variantKey?: VariantKey): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

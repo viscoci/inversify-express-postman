@@ -9,7 +9,9 @@ import { setupMetaVariant } from '../index';
  * @param paramValue The new value to set
  * @param envVariable Whether to wrap the new value as an Environment variable
  */
-export function PostmanRequestParam(keyIndex: number | string, paramValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanRequestParam<ParamValue extends string>(keyIndex: string | number, paramValue: ParamValue, envVariable, variantKey?: string)
+export function PostmanRequestParam<ParamValue extends string, VariantKey extends string>(keyIndex: string | number, paramValue: ParamValue, envVariable, variantKey?: VariantKey)
+export function PostmanRequestParam<KeyIndex extends string | number, ParamValue extends string, VariantKey extends string>(keyIndex: KeyIndex, paramValue: ParamValue, envVariable = true, variantKey?: VariantKey): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -17,7 +19,12 @@ export function PostmanRequestParam(keyIndex: number | string, paramValue: strin
         const targetName = setupMetadata(target, key);
         if(key === undefined)
         {
-            console.warn('Cannot assign request parameters to a Controller Class', '| Class:', targetName);
+            if(Metadata.folders[targetName].folder.requestParams == null)
+            {
+                Metadata.folders[targetName].folder.requestParams = new Array<{value: string; index: string | number}>();
+            }
+
+            Metadata.folders[targetName].folder.requestParams.push({index: keyIndex, value: envVariable ? `{{${paramValue}}}` : paramValue});
             return;
         }
 
