@@ -8,7 +8,9 @@ import { setupMetaVariant } from '../index';
  * @param paramValue Value the parameter should equal
  * @param envVariable If the value should be wrapped as an environment variable
  */
-export function PostmanQueryParam(paramName: string, paramValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanQueryParam<ParamValue extends string>(paramName: string, paramValue: ParamValue, envVariable?, variantKey?: string)
+export function PostmanQueryParam<ParamValue extends string, VariantKey extends string>(paramName: string, paramValue: ParamValue, envVariable?, variantKey?: VariantKey)
+export function PostmanQueryParam<ParamName extends string, ParamValue extends string, VariantKey extends string>(paramName: ParamName, paramValue: ParamValue, envVariable = true, variantKey?: VariantKey): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

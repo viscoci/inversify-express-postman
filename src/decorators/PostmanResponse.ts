@@ -1,7 +1,7 @@
 import { ResponseDefinition } from '../interfaces';
 import { Metadata, setupMetadata, setupMetaVariant } from '../index';
 
-export function PostmanResponse(responseDefinition: ResponseDefinition | string, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanResponse<VariantKey extends string>(responseDefinition: ResponseDefinition | string, variantKey?: VariantKey): (target: any, key: string, value: any) => void
 {
     const extended = function (target: any, key: string, value: any): void
     {

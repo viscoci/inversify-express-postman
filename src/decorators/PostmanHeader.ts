@@ -9,7 +9,9 @@ import { setupMetaVariant } from '../index';
  * @param headerValue
  * @param envVariable If the value should be wrapped as an environment variable
  */
-export function PostmanHeader(headerKey: string, headerValue: string, envVariable = true, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanHeader<HeaderValue extends string>(headerKey: string, headerValue: HeaderValue, envVariable?, variantKey?: string)
+export function PostmanHeader<HeaderValue extends string, VariantKey extends string>(headerKey: string, headerValue: HeaderValue, envVariable?, variantKey?: VariantKey)
+export function PostmanHeader<HeaderKey extends string, HeaderValue extends string, VariantKey extends string>(headerKey: HeaderKey, headerValue: HeaderValue, envVariable = true, variantKey?: VariantKey): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

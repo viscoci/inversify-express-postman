@@ -9,7 +9,7 @@ import { setupMetaVariant } from '../index';
  * @param test {any} An object (presumably a function) to include as a postman test script
  * @param params {any[]} An params to include with
  */
-export function PostmanTests({paths, funcs, premades}: PostmanTest, variantKey?: string): Extension
+export function PostmanTests<VariantKey extends string>({paths, funcs, premades}: PostmanTest, variantKey?: VariantKey): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void
@@ -42,7 +42,8 @@ export function PostmanTests({paths, funcs, premades}: PostmanTest, variantKey?:
  * @param func {Function} Javascript safe function in which the wrapped code will be taken from. Name must start with either
  * @param listen {PostmanEventListen} When the test script should be called (usually is either `test` or `prerequest`)
  */
-export function PostmanTestFunction(listen: PostmanEventListen, func: Function | string | string[], variantKey?: string): Extension
+export function PostmanTestFunction<FunctionPath extends string>(listen: PostmanEventListen, func: Function | FunctionPath | string[], variantKey?: string)
+export function PostmanTestFunction<FunctionPath extends string, VariantKey extends string>(listen: PostmanEventListen, func: Function | FunctionPath | string[], variantKey?: VariantKey): Extension
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key?: string, value?: any): void

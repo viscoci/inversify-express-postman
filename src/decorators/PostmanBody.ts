@@ -7,7 +7,7 @@ import { setupMetadata, setupMetaVariant } from '../index';
  *
  * *Don't forget to add the header for the Content-Type*
  */
-export function PostmanBodyRaw(raw: string, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanBodyRaw<VariantKey extends string>(raw: string, variantKey?: VariantKey): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key: string, value: any): void
@@ -41,7 +41,8 @@ export function PostmanBodyRaw(raw: string, variantKey?: string): (target: any, 
  *
  * *Don't forget to add the header for the Content-Type*
  */
-export function PostmanBody(path: string, variantKey?: string): (target: any, key: string, value: any) => void
+export function PostmanBody<Path extends string>(path: Path, variantKey?: string)
+export function PostmanBody<Path extends string, VariantKey extends string>(path: Path, variantKey?: VariantKey): (target: any, key: string, value: any) => void
 {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const extended = function (target: any, key: string, value: any): void
