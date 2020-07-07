@@ -538,11 +538,11 @@ export default async function toPostmanCollectionDefinition(metadata: Metadata[]
                         basePath[i] = folderData.requestParams[rIndx].value;
                     }
                     else {
-                        basePath[i] = `{{${folderData[i].substring(1)}}}`
+                        basePath[i] = `{{${basePath[i].substring(1)}}}`
                     }
                 }
                 else {
-                    basePath[i] = `{{${folderData[i].substring(1)}}}`
+                    basePath[i] = `{{${basePath[i].substring(1)}}}`
                 }
 
             }
